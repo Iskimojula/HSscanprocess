@@ -8,7 +8,7 @@ from math import sqrt
 from scipy.spatial import cKDTree
 import math
 import os
-
+import HSscan.optometry as opo
 
 #外推法代码定义
 def find_adjacent_points(point, distance=87):   #给入一个标定的点  distance为标定点间距
@@ -848,6 +848,9 @@ def lvpyfun(image1_filepath,image2_filepath,radius,F,X,standard_spots_filepath,n
         C=compute_C(D,J)
         rounded_coefficients = np.round(C, decimals=3)*(-1)
         r_list = list(rounded_coefficients)
+        #减去本征
+        r_list = opo.initaberration_correction(r_list)
+
         #计算PV
         # plot_zernike_wavefront(r_list)
         #计算球镜度，柱镜度数，轴向
@@ -855,6 +858,7 @@ def lvpyfun(image1_filepath,image2_filepath,radius,F,X,standard_spots_filepath,n
         r_list.append(sph)
         r_list.append(cyl)
         r_list.append(axis)
+
         return r_list
     else:
         return [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
