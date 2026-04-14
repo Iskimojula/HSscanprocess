@@ -849,7 +849,7 @@ def lvpyfun(image1_filepath,image2_filepath,radius,F,X,standard_spots_filepath,n
         rounded_coefficients = np.round(C, decimals=3)*(-1)
         r_list = list(rounded_coefficients)
         #减去本征
-        r_list = opo.initaberration_correction(r_list)
+        #r_list = opo.initaberration_correction(r_list)
 
         #计算PV
         # plot_zernike_wavefront(r_list)
