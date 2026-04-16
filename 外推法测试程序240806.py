@@ -873,26 +873,5 @@ def lvpyfun(image1_filepath,image2_filepath,radius,F,X,standard_spots_filepath,n
 # cv2.destroyAllWindows()
 #
 # #process_images('C:\\Users\\Dell\\Desktop\\optotune230810\\data\\2023_8_13_16_36_54','C:\\Users\\Dell\\Desktop\\optotune230810\\data\\2023_8_13_16_36_54\\sdbk.txt','C:\\Users\\Dell\\Desktop\\optotune230810\\data\\2023_8_13_16_36_54_2')
-capture = cv2.VideoCapture(0, cv2.CAP_ANY)  # 打开内置摄像头
-
-target_width = 1600  # 目标图像宽度
-target_height = 1200  # 目标图像高度
-
-# 设置摄像头的分辨率
-capture.set(cv2.CAP_PROP_FRAME_WIDTH, target_width)
-capture.set(cv2.CAP_PROP_FRAME_HEIGHT, target_height)
 
 
-
-while capture.isOpened():  # 摄像头被打开
-    retval, image = capture.read()
-    if retval == True:
-        cv2.imshow("ori", image)
-        cv2.imwrite('C:\\Users\\Dell\\Desktop\\ori\\ori.bmp', image)
-        r = lvpyfun("back_1600_1200_20240731.bmp", image, 1.637 , 13.11878520128891, 3.45, "DMM1600_1200交大校准完成后的数据.txt", 4)  # 画圆半径单位毫米，透镜阵列焦距单位毫米，一个像素几微米,标准点坐标
-        print(r)
-    key = cv2.waitKey(1000)
-    if key == 32:
-        break
-capture.release()
-cv2.destroyAllWindows()
