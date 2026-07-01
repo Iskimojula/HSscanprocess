@@ -27,7 +27,12 @@ while capture.isOpened():  # 摄像头被打开
         cv2.imshow("ori", image)
         cv2.imwrite('C:\\Users\\Dell\\Desktop\\ori\\ori.bmp', image)
         r = lvpyfun("back_1600_1200_20240731.bmp", image, 1.637 , 13.11878520128891, 3.45, "DMM1600_1200交大校准完成后的数据.txt", 4)  # 画圆半径单位毫米，透镜阵列焦距单位毫米，一个像素几微米,标准点坐标
-        opt.demodulation(r,para)
+        
+        print(f"phy: {para.angle},direction: {para.direction}")
+        print(f"修正前：z(0,0): {r[0]:.3f}, z(1,-1): {r[1]:.3f}, z(1,1): {r[2]:.3f}, z(2,-2): {r[3]:.3f}, z(2,0): {r[4]:.3f}, z(2,2): {r[5]:.3f}")
+        
+        #修正模式
+        #opt.demodulation(r,para)
 
     key = cv2.waitKey(1000)
     if key == 32:
