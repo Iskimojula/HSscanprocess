@@ -6,8 +6,8 @@ from math import sqrt
 from scipy.spatial import cKDTree
 import math
 import os
-import HSscan.optometry as opt
-from 外推法测试程序240806 import lvpyfun
+import optometry as opt
+from imageproc import lvpyfun
 import configpara
 
 capture = cv2.VideoCapture(0, cv2.CAP_ANY)  # 打开内置摄像头
@@ -28,6 +28,7 @@ while capture.isOpened():  # 摄像头被打开
         cv2.imwrite('C:\\Users\\Dell\\Desktop\\ori\\ori.bmp', image)
         r = lvpyfun("back_1600_1200_20240731.bmp", image, 1.637 , 13.11878520128891, 3.45, "DMM1600_1200交大校准完成后的数据.txt", 4)  # 画圆半径单位毫米，透镜阵列焦距单位毫米，一个像素几微米,标准点坐标
         opt.demodulation(r,para)
+
     key = cv2.waitKey(1000)
     if key == 32:
         break
