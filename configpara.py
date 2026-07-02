@@ -32,5 +32,6 @@ class configparameters():
         self.theta = theta
         self.angle = angle
         self.direction = setdirectionfromtheta(self.theta)
+        self.printpara()
 
 

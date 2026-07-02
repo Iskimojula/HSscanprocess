@@ -54,7 +54,7 @@ def getinputparameters():
 
 
 Bt = Button(fr_configpara,text="确定",command=getinputparameters).grid(row=5,column=1)
-##
+##记录本征像差
 
 capture = cv2.VideoCapture(0, cv2.CAP_ANY)  # 打开内置摄像头
 
