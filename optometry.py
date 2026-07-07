@@ -2,7 +2,7 @@ import math
 import numpy as np
 import yaml
 from math import sin,cos
-
+import configpara
 def printversion():
     print()
     print("****** opo algo *******")
@@ -350,11 +350,19 @@ def demodulation(ori_z_list,para):
     b3,b4,b5 = algo_elli_correction(z[3],z[4],z[5],Mx,My,para.ri,para.ro,para.theta)
 
     M,J45,J180 = calc_M_J45_J180(b3,b4,b5,radius=para.ri)
-    cyl,sph,axis = calc_sph_cyl_theta(M,J45,J180)
-
+    sph,cyl,axis = calc_sph_cyl_theta(M,J45,J180)
+    results = configpara.finalresults()
+    results.setfinalresults(z,
+                            round(b3,3),round(b4,3),round(b5,3),
+                            round(Mx,2),round(My,2),
+                            round(sph,2),round(cyl,2),round(axis,2))
+    
     print(f"phy: {para.angle},direction: {para.direction}")
     print(f"修正前：z(2,-2): {z[3]:.3f},z(2,0): {z[4]:.3f},z(2,2): {z[5]:.3f},Mx: {Mx:.3f},My: {My:.3f}")
     print(f"修正后：b(2,-2): {b3:.3f},b(2,0): {b4:.3f},b(2,2): {b5:.3f},cyl: {cyl:.3f},sph: {sph:.3f},axis: {axis:.3f}")
+    return results
+    
+    
 
 def calibration(ori_z_list,para):
     z = initaberration_correction(ori_z_list,para.direction,para.angle)
