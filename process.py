@@ -20,7 +20,7 @@ capture.set(cv2.CAP_PROP_FRAME_WIDTH, target_width)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, target_height)
 
 
-while capture.isOpened():  # 摄像头被打开
+while capture.isOpened():  # 摄像头被打开   
     para = configpara.configparameters()
     retval, image = capture.read()
     if retval == True:
@@ -30,12 +30,13 @@ while capture.isOpened():  # 摄像头被打开
         
         print(f"phy: {para.angle},direction: {para.direction}")
         print(f"修正前：z(0,0): {r[0]:.3f}, z(1,-1): {r[1]:.3f}, z(1,1): {r[2]:.3f}, z(2,-2): {r[3]:.3f}, z(2,0): {r[4]:.3f}, z(2,2): {r[5]:.3f}")
-        
+        print(f"修正前：z(3,-3): {r[6]:.3f}, z(3,-1): {r[7]:.3f}, z(3,1): {r[8]:.3f}, z(3,-3): {r[9]:.3f}")
+        print(f"修正前：z(4,-4): {r[10]:.3f}, z(4,-2): {r[11]:.3f}, z(4,0): {r[12]:.3f}, z(4,2): {r[13]:.3f}, z(4,4): {r[14]:.3f}")
         #修正模式
         #opt.demodulation(r,para)
-
+ 
     key = cv2.waitKey(1000)
     if key == 32:
         break
 capture.release()
-cv2.destroyAllWindows()
+cv2.destroyAllWindows() 
