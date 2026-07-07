@@ -164,8 +164,8 @@ def getMagnificationRatio(b3,b4,b5,ro,inputD = 99):
     return Mx,My
 
 def readMagnificationRatio(direction = 'shuiping',angle = 0):
-    Mx = 0.0
-    My = 0.0
+    Mx = 1.0
+    My = 1.0
     return Mx,My
 
 #复制compute_D_matrix矩阵

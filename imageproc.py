@@ -635,7 +635,7 @@ def draw_lines(canvas, list_standard, list_nostandard):
         x_std, y_std = round(point_std[0]), round(point_std[1])
         x_nstd, y_nstd = round(point_nstd[0]), round(point_nstd[1])
         cv2.line(canvas, (x_std, y_std), (x_nstd, y_nstd), (0, 0, 0), 1)  # 绘制连线
-    cv2.imshow("Canvas_line", canvas)
+    #cv2.imshow("Canvas_line", canvas)
 
 
 def rotate_point(point, angle_rad):
@@ -833,10 +833,10 @@ def lvpyfun(image1_filepath,image2_filepath,radius,F,X,standard_spots_filepath,n
 
     if flag:
         #保存框框图片地址
-        cv2.imwrite('C:\\Users\\Administrator\\Desktop\\123\\low.bmp', img11)
+        #cv2.imwrite('C:\\Users\\Administrator\\Desktop\\123\\low.bmp', img11)
         # # 显示框框图
-        cv2.imshow("10",img10)
-        cv2.imshow("img11",img11)
+        #cv2.imshow("10",img10)
+        #cv2.imshow("img11",img11)
         #给入可调区域的偏移坐标central1与完整标准点的central2
         xy_diffs,list_standard_spots=getcentraldiffs(no_standard_points_ratated,standard_points)
         # print(xy_diffs)

@@ -10,9 +10,9 @@ class configparameters():
     def __init__(self):
         self._lock = threading.Lock()
         #入瞳半径mm
-        self.ri = 0
+        self.ri = 1.6
         #出瞳半径mm
-        self.ro = 0
+        self.ro = 2
         #视场角theta和direction相对应
         self.theta = 0
         #视场角angle,phy
@@ -37,6 +37,11 @@ class configparameters():
             self.theta = theta
             self.angle = angle
             self.direction = setdirectionfromtheta(self.theta)
+
+    def checkvaild(self):
+        if self.ri==0 or self.ro==0:
+            return False
+        return True
 
 
 class finalresults():
@@ -85,9 +90,9 @@ class finalresults():
             self.beforedemod['a4'] = round(a[4],3)
             self.beforedemod['a5'] = round(a[5],3)
 
-            self.beforedemod['b3'] = b3
-            self.beforedemod['b4'] = b4
-            self.beforedemod['b5'] = b5
+            self.afterdemod['b3'] = b3
+            self.afterdemod['b4'] = b4
+            self.afterdemod['b5'] = b5
 
             #放大倍率
             self.Mx = Mx
