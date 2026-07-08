@@ -19,6 +19,8 @@ target_height = 1200  # 目标图像高度
 capture.set(cv2.CAP_PROP_FRAME_WIDTH, target_width)
 capture.set(cv2.CAP_PROP_FRAME_HEIGHT, target_height)
 
+if not capture.isOpened():
+    raise ValueError("摄像头错误")
 
 while capture.isOpened():  # 摄像头被打开   
     para = configpara.configparameters()
