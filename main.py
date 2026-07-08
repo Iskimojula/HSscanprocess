@@ -19,6 +19,8 @@ class App:
 
         self.fr_image = tk.LabelFrame(self.root,text="点阵图片",relief="solid",bd = 2)
         self.fr_image.pack(anchor="w")
+        self.framelabel = tk.Label(self.fr_image,bg="black")
+        self.framelabel.pack()
 
         self.fr_result = tk.LabelFrame(self.root,text="测试结果",bg="#9EE2EB",relief="solid",bd = 2)
         self.fr_result.pack()
@@ -53,7 +55,7 @@ class App:
         self.configGUI()
 
         #实验图像显示
-        #self.update_frame()
+        self.update_frame()
 
         #显示测试结果
         self.update_result()
@@ -163,7 +165,9 @@ class App:
             img = Image.fromarray(frame)
             img.resize((400,300),Image.Resampling.LANCZOS)
             imgtk = ImageTk.PhotoImage(image=img)
-            tk.Label(self.fr_image,image=img).pack()
+            
+            self.framelabel.imgtk = imgtk
+            self.framelabel.config(image=imgtk)
         except queue.Empty:
             pass
         self.root.after(30, self.update_frame)
