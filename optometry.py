@@ -345,6 +345,7 @@ def initaberration_correction(z_ist_with_initaber,dir = 0, angle = 0):
 
 
 def demodulation(ori_z_list,para):
+    
     z = initaberration_correction(ori_z_list,para.direction,para.angle)
     Mx,My = readMagnificationRatio(para.direction,para.angle)
     b3,b4,b5 = algo_elli_correction(z[3],z[4],z[5],Mx,My,para.ri,para.ro,para.theta)
@@ -352,6 +353,7 @@ def demodulation(ori_z_list,para):
     M,J45,J180 = calc_M_J45_J180(b3,b4,b5,radius=para.ri)
     sph,cyl,axis = calc_sph_cyl_theta(M,J45,J180)
     results = configpara.finalresults()
+    results.setinputdata(ori_z_list,para)
     results.setfinalresults(z,
                             round(b3,3),round(b4,3),round(b5,3),
                             round(Mx,2),round(My,2),

@@ -1,11 +1,23 @@
 import threading
-
+import time
 def setdirectionfromtheta(theta):
+    if theta == 0:
         direction = 'shuiping'
-        if theta == 90:
-            direction = 'chuizhi'
-            return direction
-        return direction
+    if theta == 90:
+        direction = 'chuizhi'
+    if theta == 45:
+            direction == 'degree45'
+    if theta == 130:
+            direction == 'degree135'
+    return direction
+
+transdirstr = {
+     'shuiping' : '水平',
+     'chuizhi' :'垂直',
+     'degree45' : '45度',
+     'degree135' : '135度'
+}
+     
 class configparameters():
     def __init__(self):
         self._lock = threading.Lock()
@@ -21,6 +33,7 @@ class configparameters():
         self.inputD = 0
         #视场角direction
         self.direction = setdirectionfromtheta(self.theta)
+        
 
     def printpara(self):
         with self._lock:
@@ -30,6 +43,8 @@ class configparameters():
             print(f"视场角theta,angle: {self.theta:.2f},{self.angle:.2f}")
             print(f"视场角方向direction:{self.direction}")
     
+    def makestrforsave(self):
+         return f"入瞳半径：{self.ri:.2f}，出瞳半径：{self.ro:.2f}，视场角：{transdirstr[self.direction]}，偏转X：{self.angle:.1f}，偏转Y：{self.angle:.1f}，试镜片：{int(self.inputD)}"
     def setconfigparameters(self,ri,ro,theta,angle):
         with self._lock:
             self.ri = ri
@@ -47,7 +62,7 @@ class configparameters():
 class finalresults():
     def __init__(self):
         self._lock = threading.Lock()
-
+        self.b = [0.0]*15
         #已经去掉了本征像差
         self.beforedemod = {
             
@@ -82,7 +97,7 @@ class finalresults():
     
     def setfinalresults(self,a,b3,b4,b5,Mx,My,sph,cyl,axis):
         with self._lock:
-            
+            self.a = a
             self.beforedemod['a0'] = round(a[0],3)
             self.beforedemod['a1'] = round(a[1],3)
             self.beforedemod['a2'] = round(a[2],3)
@@ -90,6 +105,9 @@ class finalresults():
             self.beforedemod['a4'] = round(a[4],3)
             self.beforedemod['a5'] = round(a[5],3)
 
+            self.b[3] = b3
+            self.b[4] = b4
+            self.b[5] = b5
             self.afterdemod['b3'] = b3
             self.afterdemod['b4'] = b4
             self.afterdemod['b5'] = b5
@@ -102,3 +120,27 @@ class finalresults():
             self.sph = sph
             self.cyl = cyl
             self.axis = axis
+    def setinputdata(self,ori_z_list,para):
+            with self._lock:
+                 self.ori_a = ori_z_list
+                 self.configpara = para
+                
+    def save(self,filepath):
+
+         configdata = self.configpara.makestrforsave()
+         enlargeratio = f"Mx：{self.Mx},My：{self.My}"
+         refact = f"sph,cyl,ratio：{self.sph}，{self.cyl}，{self.axis}"
+         zerniketitle = "z(0,0),z(1,-1),z(1,1),z(2,-2),z(2,0),z(2,2),z(3,-3),z(3,-1),z(3,1),z(3,3),z(4,-4),z(4,-2),z(4,0),z(4,2),z(4,4)"
+         ori_a_data = ",".join(str(x) for x in self.ori_a[:15])
+         a_data=",".join(str(x) for x in self.a[:15])
+         b_data = ",".join(str(x) for x in self.b)
+
+         with open(filepath,"a",encoding="utf-8") as f:
+              f.write(configdata + "\n")
+              f.write(enlargeratio + "\n")
+              f.write(refact + "\n")
+              f.write(zerniketitle + "\n")
+              f.write("ori_a_data: "+ori_a_data + "\n")
+              f.write("a_data: "+a_data + "\n")
+              f.write("b_data"+b_data + "\n")
+              f.write( "\n")

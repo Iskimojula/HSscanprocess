@@ -7,17 +7,20 @@ import tkinter as tk
 from tkinter import ttk
 import configpara
 import capprocess
+from collections import deque
+import os
 class App:
     def __init__(self,window,window_title,video_source = 0):
-
+        #信号灯
         self.openflag = False
-
+        self.saveflag = False
+        #新建Frame
         self.root = window
         self.root.title(window_title)
         self.root.geometry("500x800")
         self.root.resizable(False,False)
 
-        self.fr_configpara = tk.LabelFrame(self.root,text="实验参数",relief="solid",bd = 2)
+        self.fr_configpara = tk.LabelFrame(self.root,text="实验数据",relief="solid",bd = 2)
         self.fr_configpara.pack(anchor="w",padx=20)
 
         self.fr_image = tk.LabelFrame(self.root,text="点阵图片",relief="solid",bd = 2)
@@ -34,6 +37,9 @@ class App:
         self.frame_queue = queue.Queue(maxsize=1)
         self.result_queue = queue.Queue(maxsize=1)
         self.para_queue = queue.Queue(maxsize=1)
+
+        #存储管理
+        self.resfifo = deque(maxlen = 20)
 
         #打开摄像头
         self.capture = cv2.VideoCapture(video_source, cv2.CAP_ANY)  # 打开内置摄像头
@@ -62,6 +68,9 @@ class App:
 
         #显示测试结果
         self.update_result()
+
+        #状态显示
+        self.stateGUI()
 
 
 
@@ -124,7 +133,29 @@ class App:
             tk.Label(self.fr_result,textvariable=self.afterdemod_cyl).grid(row=2,column=3)
             tk.Label(self.fr_result,textvariable=self.afterdemod_axis).grid(row=3,column=3)
 
+    def saveresults(self):
+        savefolder = "res"
+        timestamp = time.strftime("%Y-%m-%d %H-%M-%S")
+        
+        if not os.path.exists(savefolder):
+                os.makedirs(savefolder)
+        
+        savepath = os.path.join(savefolder,timestamp)
 
+        
+        if len(self.resfifo) == self.resfifo.maxlen :
+            for res in self.resfifo:
+                res.save(savepath)
+            
+            print("结果已保存！")
+        else :
+            print("数据量不足，不能保存！")
+
+        
+
+    def saveframe(self):
+        pass
+        
     def configGUI(self):
 
 
@@ -158,9 +189,17 @@ class App:
         self.__ent_inputD.grid(row=4,column=1)
         lab_ent_inputD2 = tk.Label(self.fr_configpara,text="D").grid(row=4,column=2)
         
-        Bt = tk.Button(self.fr_configpara,text="确定",command=self.getinputparameters,width=10).grid(row=5,column=1,columnspan=3)
+        Bt = tk.Button(self.fr_configpara,text="确定",command=self.getinputparameters,width=10).grid(row=5,column=1,columnspan=2)
 
-
+    def stateGUI(self):
+        self.mode = tk.IntVar()
+        mode1 = tk.Radiobutton(self.fr_configpara,text = "本征像差",variable=self.mode,value=1)
+        mode1.grid(row=0,column=3)
+        mode2 = tk.Radiobutton(self.fr_configpara,text = "测试模式",variable=self.mode,value=2)
+        mode2.grid(row=1,column=3)
+        
+        tk.Button(self.fr_configpara,text="保存数据",command=self.saveresults,width=10).grid(row=0,column=4)
+        tk.Button(self.fr_configpara,text="保存图像",command=self.saveframe,width=10).grid(row=1,column=4)
     def update_frame(self):
 
         try:
@@ -208,6 +247,10 @@ class App:
             self.afterdemod_sph.set(f"{result.sph:.3f}")
             self.afterdemod_cyl.set(f"{result.cyl:.3f}")
             self.afterdemod_axis.set(f"{result.axis:.3f}")
+
+            self.resfifo.append(result)
+            if len(self.resfifo) == self.resfifo.maxlen:
+                self.saveflag = True
 
         except queue.Empty:
             pass
