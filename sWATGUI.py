@@ -154,7 +154,13 @@ class App:
         
 
     def saveframe(self):
-        pass
+        savefolder = "res"
+        if not os.path.exists(savefolder):
+            os.makedirs(savefolder)
+
+        name = str(self.para.direction)+"_angle"+str(self.para.angle)+"_"+str(self.para.inputD)+"D.jpg"
+        savepath = os.path.join(savefolder,name)
+        cv2.imwrite(savepath,self.currentframe)
         
     def configGUI(self):
 
@@ -203,9 +209,9 @@ class App:
     def update_frame(self):
 
         try:
-            frame = self.frame_queue.get_nowait()          
+            self.currentframe = self.frame_queue.get_nowait()          
    
-            img = Image.fromarray(frame)
+            img = Image.fromarray(self.currentframe)
             img = img.resize((450,337),Image.Resampling.LANCZOS)
             imgtk = ImageTk.PhotoImage(image=img)
             
