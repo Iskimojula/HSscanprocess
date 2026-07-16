@@ -9,6 +9,7 @@ import configpara
 import capprocess
 from collections import deque
 import os
+import optotunecontrol as mirctl
 class App:
     def __init__(self,window,window_title,video_source = 0):
         #信号灯
@@ -22,6 +23,7 @@ class App:
 
         self.fr_configpara = tk.LabelFrame(self.root,text="实验数据",relief="solid",bd = 2)
         self.fr_configpara.pack(anchor="w",padx=20)
+        self.makemirrorStringVar()
 
         self.fr_image = tk.LabelFrame(self.root,text="点阵图片",relief="solid",bd = 2)
         self.fr_image.pack()
@@ -40,7 +42,8 @@ class App:
 
         #存储管理
         self.resfifo = deque(maxlen = 20)
-
+        #振镜初始化
+        self.mir = mirctl.optotune()
         #打开摄像头
         self.capture = cv2.VideoCapture(video_source, cv2.CAP_ANY)  # 打开内置摄像头
         target_width = 1600  # 目标图像宽度
@@ -62,6 +65,9 @@ class App:
         
         #实验参数控制
         self.configGUI()
+
+        #振镜控制显示
+        self.mirrorGUI()
 
         #实验图像显示
         self.update_frame()
@@ -91,6 +97,16 @@ class App:
             except queue.Empty:
                 pass
             self.para_queue.put_nowait(self.para)
+    def makemirrorStringVar(self):
+        self.actualdegreex = tk.StringVar(value="--")
+        self.actualdegreey = tk.StringVar(value="--")
+        tk.Label(self.fr_configpara,text="GETY:").grid(row=3,column=5)
+        tk.Label(self.fr_configpara,textvariable=self.actualdegreex).grid(row=3,column=6)
+        
+
+        tk.Label(self.fr_configpara,text="GETX:").grid(row=2,column=5)
+        tk.Label(self.fr_configpara,textvariable=self.actualdegreey).grid(row=2,column=6)
+
     def makeresultsStringVar(self):
             self.beforedemod_a0 = tk.StringVar(value="--")
             self.beforedemod_a1 = tk.StringVar(value="--")
@@ -112,27 +128,28 @@ class App:
 
 
             tk.Label(self.fr_result,text="zernike a: ",bg="#EEA9B8",width=15).grid(row=0,column=0)
-            tk.Label(self.fr_result,textvariable=self.beforedemod_a0).grid(row=1,column=0)
-            tk.Label(self.fr_result,textvariable=self.beforedemod_a1).grid(row=2,column=0)
-            tk.Label(self.fr_result,textvariable=self.beforedemod_a2).grid(row=3,column=0)
-            tk.Label(self.fr_result,textvariable=self.beforedemod_a3).grid(row=4,column=0)
-            tk.Label(self.fr_result,textvariable=self.beforedemod_a4).grid(row=5,column=0)
-            tk.Label(self.fr_result,textvariable=self.beforedemod_a5).grid(row=6,column=0)
+            tk.Label(self.fr_result,textvariable=self.beforedemod_a0,bg="#9EE2EB").grid(row=1,column=0)
+            tk.Label(self.fr_result,textvariable=self.beforedemod_a1,bg="#9EE2EB").grid(row=2,column=0)
+            tk.Label(self.fr_result,textvariable=self.beforedemod_a2,bg="#9EE2EB").grid(row=3,column=0)
+            tk.Label(self.fr_result,textvariable=self.beforedemod_a3,bg="#9EE2EB").grid(row=4,column=0)
+            tk.Label(self.fr_result,textvariable=self.beforedemod_a4,bg="#9EE2EB").grid(row=5,column=0)
+            tk.Label(self.fr_result,textvariable=self.beforedemod_a5,bg="#9EE2EB").grid(row=6,column=0)
 
             tk.Label(self.fr_result,text="zernike b: ",bg="#EEA9B8",width=15).grid(row=0,column=1)
-            tk.Label(self.fr_result,textvariable=self.afterdemod_b3).grid(row=1,column=1)
-            tk.Label(self.fr_result,textvariable=self.afterdemod_b4).grid(row=2,column=1)
-            tk.Label(self.fr_result,textvariable=self.afterdemod_b5).grid(row=3,column=1)
+            tk.Label(self.fr_result,textvariable=self.afterdemod_b3,bg="#9EE2EB").grid(row=1,column=1)
+            tk.Label(self.fr_result,textvariable=self.afterdemod_b4,bg="#9EE2EB").grid(row=2,column=1)
+            tk.Label(self.fr_result,textvariable=self.afterdemod_b5,bg="#9EE2EB").grid(row=3,column=1)
 
             tk.Label(self.fr_result,text="Mx,My: ",bg="#EEA9B8",width=15).grid(row=0,column=2)
-            tk.Label(self.fr_result,textvariable=self.afterdemod_Mx).grid(row=1,column=2)
-            tk.Label(self.fr_result,textvariable=self.afterdemod_My).grid(row=2,column=2)
+            tk.Label(self.fr_result,textvariable=self.afterdemod_Mx,bg="#9EE2EB").grid(row=1,column=2)
+            tk.Label(self.fr_result,textvariable=self.afterdemod_My,bg="#9EE2EB").grid(row=2,column=2)
 
             tk.Label(self.fr_result,text="sph,cyl,axis: ",bg="#EEA9B8",width=15).grid(row=0,column=3)
-            tk.Label(self.fr_result,textvariable=self.afterdemod_sph).grid(row=1,column=3)
-            tk.Label(self.fr_result,textvariable=self.afterdemod_cyl).grid(row=2,column=3)
-            tk.Label(self.fr_result,textvariable=self.afterdemod_axis).grid(row=3,column=3)
+            tk.Label(self.fr_result,textvariable=self.afterdemod_sph,bg="#9EE2EB").grid(row=1,column=3)
+            tk.Label(self.fr_result,textvariable=self.afterdemod_cyl,bg="#9EE2EB").grid(row=2,column=3)
+            tk.Label(self.fr_result,textvariable=self.afterdemod_axis,bg="#9EE2EB").grid(row=3,column=3)
 
+    
     def saveresults(self):
         savefolder = "res"
         timestamp = time.strftime("%Y-%m-%d %H-%M-%S")
@@ -146,7 +163,8 @@ class App:
         if len(self.resfifo) == self.resfifo.maxlen :
             for res in self.resfifo:
                 res.save(savepath)
-            
+            self.resfifo.clear()
+            self.saveflag = False
             print("结果已保存！")
         else :
             print("数据量不足，不能保存！")
@@ -161,7 +179,15 @@ class App:
         name = str(self.para.direction)+"_angle"+str(self.para.angle)+"_"+str(self.para.inputD)+"D.jpg"
         savepath = os.path.join(savefolder,name)
         cv2.imwrite(savepath,self.currentframe)
-        
+    
+    def setmirrortarget(self):
+        degreetargetx = float(self.__ent_inputx.get())
+        degreetargety = float(self.__ent_inputy.get())
+        self.mir.setxy(degreetargetx,degreetargety)
+
+    def setmirrorzero(self):
+        self.mir.setzero()
+
     def configGUI(self):
 
 
@@ -204,8 +230,28 @@ class App:
         mode2 = tk.Radiobutton(self.fr_configpara,text = "测试模式",variable=self.mode,value=2)
         mode2.grid(row=1,column=3)
         
-        tk.Button(self.fr_configpara,text="保存数据",command=self.saveresults,width=10).grid(row=0,column=4)
-        tk.Button(self.fr_configpara,text="保存图像",command=self.saveframe,width=10).grid(row=1,column=4)
+        tk.Button(self.fr_configpara,text="保存数据",command=self.saveresults,width=10).grid(row=2,column=3)
+        tk.Button(self.fr_configpara,text="保存图像",command=self.saveframe,width=10).grid(row=3,column=3)
+
+    def mirrorGUI(self):
+        #振镜输入
+        tk.Label(self.fr_configpara,text="SETY:").grid(row=1,column=5)
+        targetx_default = tk.DoubleVar(value=0.0)
+        self.__ent_inputx = tk.Entry(self.fr_configpara,textvariable=targetx_default,width=5)
+        self.__ent_inputx.grid(row=1,column=6)
+        tk.Label(self.fr_configpara,text="° ").grid(row=1,column=7)
+
+        tk.Label(self.fr_configpara,text="SETX:").grid(row=0,column=5)
+        targety_default = tk.DoubleVar(value=0.0)
+        self.__ent_inputy = tk.Entry(self.fr_configpara,textvariable=targety_default,width=5)
+        self.__ent_inputy.grid(row=0,column=6)
+        tk.Label(self.fr_configpara,text="° ").grid(row=0,column=7)
+
+        tk.Button(self.fr_configpara,text="确定",command=self.setmirrortarget,width=10).grid(row=0,column=8)
+        tk.Button(self.fr_configpara,text="置零",command=self.setmirrorzero,width=10).grid(row=1,column=8)
+        #读振镜
+        self.update_mirror()
+
     def update_frame(self):
 
         try:
@@ -263,6 +309,13 @@ class App:
         self.root.after(1000, self.update_result)
         # 30ms 约 33 fps
 
+    def update_mirror(self):
+        actualdegreex,actualdegreey = self.mir.getxy()
 
+        self.actualdegreex.set(f"{actualdegreex}°")
+        self.actualdegreey.set(f"{actualdegreey}°")
+
+        self.root.after(50,self.update_mirror)
+        
 
     
