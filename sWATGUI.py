@@ -182,6 +182,10 @@ class App:
         name = str(self.para.direction)+"_angle"+str(self.para.angle)+"_"+str(self.para.inputD)+"D.jpg"
         savepath = os.path.join(savefolder,name)
         cv2.imwrite(savepath,self.currentframe)
+    def cleardataqueue(self):
+        self.resfifo.clear()
+        self.saveflag = False
+
     
     def setmirrortarget(self):
         degreetargetx = float(self.__ent_inputx.get())
@@ -235,6 +239,7 @@ class App:
         
         tk.Button(self.fr_configpara,text="保存数据",command=self.saveresults,width=10).grid(row=2,column=3)
         tk.Button(self.fr_configpara,text="保存图像",command=self.saveframe,width=10).grid(row=3,column=3)
+        tk.Button(self.fr_configpara,text="清空数据",command=self.cleardataqueue,width=10).grid(row = 4, column=3)
 
     def mirrorGUI(self):
         #振镜输入
@@ -255,9 +260,9 @@ class App:
         #读振镜
         self.update_mirror()
     def flagGUI(self):
-        tk.Label(self.fr_configpara,text="SaveFlag:").grid(row=4,column=3)
+        tk.Label(self.fr_configpara,text="SaveFlag:").grid(row=5,column=3)
         self.indicator = tk.Label(self.fr_configpara,text="●",font=("Arial",16),fg="red")
-        self.indicator.grid(row= 4,column = 4)
+        self.indicator.grid(row= 5,column = 4)
 
         self.update_flag()
     def update_frame(self):
