@@ -78,6 +78,9 @@ class App:
         #状态显示
         self.stateGUI()
 
+        #标志位
+        self.flagGUI()
+
 
 
     def getinputparameters(self):
@@ -251,7 +254,12 @@ class App:
         tk.Button(self.fr_configpara,text="置零",command=self.setmirrorzero,width=10).grid(row=1,column=8)
         #读振镜
         self.update_mirror()
+    def flagGUI(self):
+        tk.Label(self.fr_configpara,text="SaveFlag:").grid(row=4,column=3)
+        self.indicator = tk.Label(self.fr_configpara,text="●",font=("Arial",16),fg="red")
+        self.indicator.grid(row= 4,column = 4)
 
+        self.update_flag()
     def update_frame(self):
 
         try:
@@ -317,5 +325,11 @@ class App:
 
         self.root.after(50,self.update_mirror)
         
+    def update_flag(self):
+        if self.saveflag :
+            self.indicator.config(fg="green")
+        else:
+            self.indicator.config(fg = "red")
 
+        self.root.after(50, self.update_flag)
     
