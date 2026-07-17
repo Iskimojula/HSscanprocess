@@ -45,12 +45,13 @@ class configparameters():
     
     def makestrforsave(self):
          return f"入瞳半径：{self.ri:.2f}，出瞳半径：{self.ro:.2f}，视场角：{transdirstr[self.direction]}，偏转X：{self.angle:.1f}，偏转Y：{self.angle:.1f}，试镜片：{int(self.inputD)}"
-    def setconfigparameters(self,ri,ro,theta,angle):
+    def setconfigparameters(self,ri,ro,theta,angle,lens):
         with self._lock:
             self.ri = ri
             self.ro = ro
             self.theta = theta
             self.angle = angle
+            self.inputD = lens
             self.direction = setdirectionfromtheta(self.theta)
 
     def checkvaild(self):

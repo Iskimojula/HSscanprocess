@@ -88,7 +88,8 @@ class App:
         ro = float(self.__ent_ro.get())
         theta = float(self.__ent_theta.get())
         angle = float(self.__ent_angle.get())
-        self.para.setconfigparameters(ri,ro,theta,angle)
+        lens = float(self.__ent_inputD.get())
+        self.para.setconfigparameters(ri,ro,theta,angle,lens)
         self.para.printpara()
         self.openflag = True
         try:
