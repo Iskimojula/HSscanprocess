@@ -10,6 +10,11 @@ import capprocess
 from collections import deque
 import os
 import optotunecontrol as mirctl
+from services.gyro_service import GyroService
+from views.gyro_panel import GyroPanel
+from utils.resources import resource_path
+
+
 class App:
     def __init__(self,window,window_title,video_source = 0):
         #信号灯
@@ -18,8 +23,11 @@ class App:
         #新建Frame
         self.root = window
         self.root.title(window_title)
-        self.root.geometry("500x800")
+        #窗口尺寸先给一个下限，__init__ 末尾再按内容自适应（见 _fit_window）
+        self.root.geometry("520x920")
         self.root.resizable(False,False)
+        #关闭窗口时释放陀螺仪串口（关闭动作在子线程执行，主线程不卡顿）
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
         self.fr_configpara = tk.LabelFrame(self.root,text="实验数据",relief="solid",bd = 2)
         self.fr_configpara.pack(anchor="w",padx=20)
@@ -50,8 +58,12 @@ class App:
         target_height = 1200  # 目标图像高度
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, target_width)
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, target_height)
-        if not self.capture.isOpened():
-            raise ValueError("无法打开摄像头")
+        #相机打不开不再让程序直接崩掉：界面照常起来（参数、陀螺仪面板可用），
+        #图像与测试结果区保持"no frame!"，方便在没有相机的机器上调试界面。
+        self.camera_available = bool(self.capture.isOpened())
+        if not self.camera_available:
+            print("[相机] 未检测到可用相机（索引 %s）：图像采集与测试结果不会更新，其余功能正常。"
+                  % video_source)
 
         #启动数据处理线程
         
@@ -69,6 +81,11 @@ class App:
         #振镜控制显示
         self.mirrorGUI()
 
+        #陀螺仪角度与转动角 theta 面板（设备访问/计算都在 services/ 里，按钮回调不阻塞）
+        self.gyro_service = GyroService()
+        self.gyro_panel = GyroPanel(self.fr_configpara, self.gyro_service)
+        self.gyro_panel.grid(row=6,column=0,columnspan=9,sticky="we",padx=6,pady=(6,8))
+
         #实验图像显示
         self.update_frame()
 
@@ -80,6 +97,9 @@ class App:
 
         #标志位
         self.flagGUI()
+
+        #按内容自适应窗口尺寸：不同 DPI/字体下不会把右侧控件裁掉
+        self._fit_window()
 
 
 
@@ -105,11 +125,12 @@ class App:
         self.actualdegreex = tk.StringVar(value="--")
         self.actualdegreey = tk.StringVar(value="--")
         tk.Label(self.fr_configpara,text="GETY:").grid(row=3,column=5)
-        tk.Label(self.fr_configpara,textvariable=self.actualdegreex).grid(row=3,column=6)
+        #固定宽度，避免振镜读数从 "--" 变成数值时撑宽面板
+        tk.Label(self.fr_configpara,textvariable=self.actualdegreex,width=6,anchor="w").grid(row=3,column=6)
         
 
         tk.Label(self.fr_configpara,text="GETX:").grid(row=2,column=5)
-        tk.Label(self.fr_configpara,textvariable=self.actualdegreey).grid(row=2,column=6)
+        tk.Label(self.fr_configpara,textvariable=self.actualdegreey,width=6,anchor="w").grid(row=2,column=6)
 
     def makeresultsStringVar(self):
             self.beforedemod_a0 = tk.StringVar(value="--")
@@ -280,7 +301,8 @@ class App:
         except queue.Empty:
             pass
         if not self.openflag:
-            img = Image.open("no frame.png").convert("L")  # 关键：convert("L")
+            #用动态资源路径，兼容 PyInstaller 打包（sys._MEIPASS）
+            img = Image.open(resource_path("no frame.png")).convert("L")  # 关键：convert("L")
             img = img.resize((450, 337), Image.Resampling.LANCZOS)
             imgtk = ImageTk.PhotoImage(image=img)
 
@@ -338,4 +360,22 @@ class App:
             self.indicator.config(fg = "red")
 
         self.root.after(50, self.update_flag)
+
+    def on_close(self):
+        """关闭窗口：先让服务在子线程释放串口，再销毁窗口，避免卡顿与句柄残留。"""
+        try:
+            self.gyro_service.stop()
+        except Exception:
+            pass
+        self.root.destroy()
+
+    def _fit_window(self):
+        """按控件实际需求尺寸调整窗口，保证各面板完整可见。"""
+        try:
+            self.root.update_idletasks()
+            width = max(520, self.root.winfo_reqwidth())
+            height = max(920, self.root.winfo_reqheight())
+            self.root.geometry("{}x{}".format(width, height))
+        except Exception:
+            pass
     
