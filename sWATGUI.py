@@ -23,7 +23,7 @@ class App:
         #新建Frame
         self.root = window
         self.root.title(window_title)
-        #新增陀螺仪面板后窗口高度上调，保证"测试结果"面板完整可见
+        #窗口尺寸先给一个下限，__init__ 末尾再按内容自适应（见 _fit_window）
         self.root.geometry("520x920")
         self.root.resizable(False,False)
         #关闭窗口时释放陀螺仪串口（关闭动作在子线程执行，主线程不卡顿）
@@ -94,6 +94,9 @@ class App:
         #标志位
         self.flagGUI()
 
+        #按内容自适应窗口尺寸：不同 DPI/字体下不会把右侧控件裁掉
+        self._fit_window()
+
 
 
     def getinputparameters(self):
@@ -118,11 +121,12 @@ class App:
         self.actualdegreex = tk.StringVar(value="--")
         self.actualdegreey = tk.StringVar(value="--")
         tk.Label(self.fr_configpara,text="GETY:").grid(row=3,column=5)
-        tk.Label(self.fr_configpara,textvariable=self.actualdegreex).grid(row=3,column=6)
+        #固定宽度，避免振镜读数从 "--" 变成数值时撑宽面板
+        tk.Label(self.fr_configpara,textvariable=self.actualdegreex,width=6,anchor="w").grid(row=3,column=6)
         
 
         tk.Label(self.fr_configpara,text="GETX:").grid(row=2,column=5)
-        tk.Label(self.fr_configpara,textvariable=self.actualdegreey).grid(row=2,column=6)
+        tk.Label(self.fr_configpara,textvariable=self.actualdegreey,width=6,anchor="w").grid(row=2,column=6)
 
     def makeresultsStringVar(self):
             self.beforedemod_a0 = tk.StringVar(value="--")
@@ -360,4 +364,14 @@ class App:
         except Exception:
             pass
         self.root.destroy()
+
+    def _fit_window(self):
+        """按控件实际需求尺寸调整窗口，保证各面板完整可见。"""
+        try:
+            self.root.update_idletasks()
+            width = max(520, self.root.winfo_reqwidth())
+            height = max(920, self.root.winfo_reqheight())
+            self.root.geometry("{}x{}".format(width, height))
+        except Exception:
+            pass
     

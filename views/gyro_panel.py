@@ -64,9 +64,10 @@ class GyroPanel(tk.LabelFrame):
             self, text="连接", width=7, command=self.on_connect_toggle
         )
         self.btn_connect.grid(row=0, column=2, sticky="w", padx=4)
-        self.lbl_status = tk.Label(self, textvariable=self.var_status, anchor="w")
+        #固定宽度：状态/速率/数值长度变化时不改变面板宽度（避免窗口抖动或被裁切）
+        self.lbl_status = tk.Label(self, textvariable=self.var_status, anchor="w", width=24)
         self.lbl_status.grid(row=0, column=3, columnspan=2, sticky="w")
-        tk.Label(self, textvariable=self.var_rate, anchor="e", fg=COLOR_OFF).grid(
+        tk.Label(self, textvariable=self.var_rate, anchor="e", fg=COLOR_OFF, width=8).grid(
             row=0, column=5, sticky="e"
         )
 
@@ -74,7 +75,9 @@ class GyroPanel(tk.LabelFrame):
         tk.Label(self, text="初始 Yaw1/Pitch1/Roll1").grid(
             row=1, column=0, columnspan=2, sticky="w", padx=(4, 2)
         )
-        tk.Label(self, textvariable=self.var_reference, font=FONT_VALUE, anchor="w").grid(
+        tk.Label(
+            self, textvariable=self.var_reference, font=FONT_VALUE, anchor="w", width=24
+        ).grid(
             row=1, column=2, columnspan=2, sticky="w"
         )
         self.btn_record = tk.Button(self, text="记录", width=7, command=self.on_record)
@@ -84,7 +87,9 @@ class GyroPanel(tk.LabelFrame):
         tk.Label(self, text="当前 Yaw2/Pitch2/Roll2").grid(
             row=2, column=0, columnspan=2, sticky="w", padx=(4, 2)
         )
-        tk.Label(self, textvariable=self.var_current, font=FONT_VALUE, anchor="w").grid(
+        tk.Label(
+            self, textvariable=self.var_current, font=FONT_VALUE, anchor="w", width=24
+        ).grid(
             row=2, column=2, columnspan=2, sticky="w"
         )
         self.btn_clear = tk.Button(self, text="清零", width=7, command=self.on_clear)
@@ -97,7 +102,7 @@ class GyroPanel(tk.LabelFrame):
         )
         tk.Label(self, text="°", anchor="w").grid(row=3, column=2, sticky="w")
         tk.Label(self, text="转轴 L =", anchor="w").grid(row=3, column=3, sticky="w")
-        tk.Label(self, textvariable=self.var_axis, font=FONT_VALUE, anchor="w").grid(
+        tk.Label(self, textvariable=self.var_axis, font=FONT_VALUE, anchor="w", width=25).grid(
             row=3, column=4, columnspan=2, sticky="w"
         )
 
@@ -109,6 +114,7 @@ class GyroPanel(tk.LabelFrame):
             fg=COLOR_ERROR,
             anchor="w",
             justify="left",
+            width=58,
             wraplength=430,
         ).grid(row=4, column=0, columnspan=6, sticky="w", padx=4)
 
