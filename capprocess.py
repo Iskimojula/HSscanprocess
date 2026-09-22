@@ -11,12 +11,16 @@ from imageproc import lvpyfun
 import configpara
 import queue
 def captureprocess(capture,frame_queue,result_queue,para_queue):
+    #提示信息只在状态变化时打印一次，避免每 500ms 刷屏（旧版会不停打印 para_queue.empty！）
+    last_note = None
+    note = None
     while  True:
         if not para_queue.empty():
             para = para_queue.get_nowait()
             para_queue.put_nowait(para)
             retval, image = capture.read()
             if retval == True and para.checkvaild() == True:
+                note = "采集运行中"
                 #cv2.imshow("ori", image)
                 #cv2.imwrite('C:\\Users\\Dell\\Desktop\\ori\\ori.bmp', image)
                 r = lvpyfun("back_1600_1200_20240731.bmp", image, 1.637 , 13.11878520128891, 3.45, "DMM1600_1200交大校准完成后的数据.txt", 4)  # 画圆半径单位毫米，透镜阵列焦距单位毫米，一个像素几微米,标准点坐标
@@ -49,8 +53,12 @@ def captureprocess(capture,frame_queue,result_queue,para_queue):
                     except queue.Empty:
                         pass
                     result_queue.put_nowait(results)
-            else: print("para.checkvaild() is False！")
+            else:
+                note = "未取到图像或参数无效（检查相机是否可用、入瞳/出瞳半径是否为 0）"
         else:
-            print("para_queue.empty！")
+            note = "等待参数下发（点“确定”后开始采集）"
+        if note != last_note:
+            print("[采集] " + note)
+            last_note = note
         cv2.waitKey(500)
 

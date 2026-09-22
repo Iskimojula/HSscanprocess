@@ -22,7 +22,53 @@ from services import rotation_math as rm
 
 # 超过该秒数没有新数据即视为"数据超时"
 STALE_AFTER_S = 1.0
-DEFAULT_BAUD = 115200
+#本机实测 HWT906P 出厂/常用波特率为 921600（工具软件默认值），其余为兼容常见配置
+BAUD_CANDIDATES = (921600, 115200, 460800, 9600)
+DEFAULT_BAUD = BAUD_CANDIDATES[0]
+# 打开串口后等待第一帧有效数据的时间
+PROBE_TIMEOUT_S = 1.5
+
+# WitStandardProtocol：11 字节定长帧，帧头 0x55，末字节为前 10 字节之和
+FRAME_HEADER = 0x55
+FRAME_TYPES = (0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59)
+
+
+def has_valid_frame(buf: bytes) -> bool:
+    """判断缓冲区里是否出现了合法的 WitMotion 数据帧。"""
+    for i in range(len(buf) - 10):
+        if buf[i] != FRAME_HEADER or buf[i + 1] not in FRAME_TYPES:
+            continue
+        if (sum(buf[i:i + 10]) & 0xFF) == buf[i + 10]:
+            return True
+    return False
+
+
+def detect_baud(port: str, candidates=BAUD_CANDIDATES, per_baud_timeout: float = 1.0):
+    """用 pyserial 直接抓包，返回第一个能收到合法数据帧的波特率；都失败返回 None。
+
+    先用轻量抓包定波特率，再把串口交给 SDK，避免 SDK 在错误波特率上逐个读寄存器
+    造成的长时间等待。
+    """
+    try:
+        import serial
+    except ImportError:
+        return None
+    for baud in candidates:
+        try:
+            with serial.Serial(port, baud, timeout=0.2) as ser:
+                deadline = time.time() + per_baud_timeout
+                buf = bytearray()
+                while time.time() < deadline:
+                    chunk = ser.read(256)
+                    if chunk:
+                        buf.extend(chunk)
+                        if has_valid_frame(bytes(buf)):
+                            return baud
+                    else:
+                        time.sleep(0.01)
+        except Exception:
+            continue
+    return None
 
 
 @dataclass(frozen=True)
@@ -69,6 +115,7 @@ class GyroSnapshot:
     rate_hz: float
     temperature: Optional[float]
     fresh: bool
+    baud: int
 
 
 class SensorAdapter:
@@ -168,10 +215,13 @@ class HWT906PAdapter(SensorAdapter):
 class GyroService:
     """陀螺仪服务：设备生命周期 + 后台数据流 + 记录/清零状态机。"""
 
-    def __init__(self, adapter: Optional[SensorAdapter] = None):
+    def __init__(self, adapter: Optional[SensorAdapter] = None,
+                 baud_detector: Optional[Callable[[str], Optional[int]]] = None):
         self._adapter = adapter if adapter is not None else HWT906PAdapter()
+        self._baud_detector = baud_detector if baud_detector is not None else detect_baud
         self._lock = threading.RLock()
         self._events = queue.Queue(maxsize=1)
+        self._probe_ok = threading.Event()
 
         self._port = ""
         self._baud = DEFAULT_BAUD
@@ -196,12 +246,15 @@ class GyroService:
 
     # ── 生命周期 ───────────────────────────────────────────────────
 
-    def start(self, port: str, baud: int = DEFAULT_BAUD) -> None:
-        """启动采集。立即返回，串口打开在子线程完成。"""
+    def start(self, port: str, baud: Optional[int] = None) -> None:
+        """启动采集。立即返回，串口打开在子线程完成。
+
+        baud 为 None 时自动识别波特率（921600 / 115200 / 460800 / 9600）。
+        """
         with self._lock:
             self._stop_requested = False
             self._port = port
-            self._baud = baud
+            self._baud = baud if baud else 0
             self._connecting = True
             self._connected = False
             self._error = ""
@@ -209,6 +262,8 @@ class GyroService:
             self._q_ref = None
             self._theta = None
             self._axis = None
+            self._current = None
+            self._last_rx_time = 0.0
         self._put_event()
         thread = threading.Thread(
             target=self._connect_worker,
@@ -227,42 +282,81 @@ class GyroService:
         self._put_event()
         threading.Thread(target=self._close_worker, daemon=True, name="GyroService-Close").start()
 
-    def _connect_worker(self, port: str, baud: int) -> None:
+    def _connect_worker(self, port: str, baud: Optional[int]) -> None:
+        #没指定波特率就先自动识别（本机 HWT906P 实测为 921600）
+        if not baud:
+            baud = self._baud_detector(port)
+            if not baud:
+                self._fail(
+                    "在 %s 上没检测到 HWT906P 数据帧（已尝试波特率 %s）。"
+                    "请确认传感器已上电、串口没有被其它软件占用，或在面板里手动指定波特率。"
+                    % (port, "/".join(str(b) for b in BAUD_CANDIDATES))
+                )
+                return
+            print("[陀螺仪] 自动识别波特率：%d" % baud)
+
+        self._probe_ok.clear()
         try:
             self._adapter.set_callback(self._on_sample)
             self._adapter.open(port, baud)
         except Exception as exc:
-            with self._lock:
-                self._connecting = False
-                self._connected = False
-                self._error = "连接 %s 失败：%s" % (port, exc)
-            self._put_event()
+            self._fail("连接 %s 失败：%s" % (port, exc))
             return
+
+        if self._stop_requested:
+            self._safe_close()
+            self._mark_disconnected()
+            return
+
+        #打开成功不等于能通信：必须真的收到一帧合法数据才算连上
+        if not self._probe_ok.wait(PROBE_TIMEOUT_S):
+            first = self._adapter.read()
+            if first is not None:
+                self._on_sample(first)
+        if self._stop_requested:
+            self._safe_close()
+            self._mark_disconnected()
+            return
+        if not self._probe_ok.is_set():
+            self._safe_close()
+            self._fail(
+                "已打开 %s @ %d，但 %.1fs 内没有收到数据帧：请确认波特率正确、"
+                "串口未被其它程序（如 WitMotion 上位机、陀螺仪工具软件）占用。"
+                % (port, baud, PROBE_TIMEOUT_S)
+            )
+            return
+
         with self._lock:
             self._connecting = False
-            if self._stop_requested:
-                self._connected = False
-                self._error = ""
-            else:
-                self._connected = True
-                self._error = ""
-                self._last_rx_time = time.time()
+            self._connected = True
+            self._baud = baud
+            self._error = ""
+            self._last_rx_time = time.time()
         self._put_event()
-        if self._stop_requested:
-            try:
-                self._adapter.close()
-            except Exception:
-                pass
-            return
-        first = self._adapter.read()
-        if first is not None:
-            self._on_sample(first)
+        print("[陀螺仪] 已连接 %s @ %d" % (port, baud))
 
-    def _close_worker(self) -> None:
+    def _safe_close(self) -> None:
         try:
             self._adapter.close()
         except Exception:
             pass
+
+    def _fail(self, message: str) -> None:
+        with self._lock:
+            self._connecting = False
+            self._connected = False
+            self._error = message
+        self._put_event()
+        print("[陀螺仪] " + message)
+
+    def _mark_disconnected(self) -> None:
+        with self._lock:
+            self._connecting = False
+            self._connected = False
+        self._put_event()
+
+    def _close_worker(self) -> None:
+        self._safe_close()
         self._put_event()
 
     # ── 数据流 ─────────────────────────────────────────────────────
@@ -270,6 +364,7 @@ class GyroService:
     def _on_sample(self, sample: GyroSample) -> None:
         """传感器读线程回调：只做 O(1) 计算与入队，绝不触碰 UI。"""
         now = time.time()
+        self._probe_ok.set()   # 收到第一帧即认为通信正常
         with self._lock:
             self._last_sample = sample
             self._current = AngleTriple(sample.yaw, sample.pitch, sample.roll)
@@ -371,6 +466,7 @@ class GyroService:
                 rate_hz=self._rate_hz,
                 temperature=self._temperature,
                 fresh=fresh,
+                baud=self._baud,
             )
 
     @staticmethod

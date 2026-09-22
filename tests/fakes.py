@@ -9,7 +9,7 @@ from services.gyro_service import GyroSample
 class FakeAdapter:
     """可编程的假传感器。"""
 
-    def __init__(self, fail_open=False, open_delay=0.0):
+    def __init__(self, fail_open=False, open_delay=0.0, auto_feed=None):
         self.fail_open = fail_open
         self.opened = False
         self.closed = False
@@ -17,6 +17,9 @@ class FakeAdapter:
         self.sample = None
         self.open_delay = open_delay
         self.open_error = None
+        self.baud = None
+        #模拟"一打开串口设备就持续上报"：给定 (yaw, pitch, roll) 则在 open 时先送一帧
+        self.auto_feed = auto_feed
 
     def open(self, port, baud):
         time.sleep(self.open_delay)
@@ -24,7 +27,10 @@ class FakeAdapter:
             raise ConnectionError("port busy")
         if self.open_error:
             raise self.open_error
+        self.baud = baud
         self.opened = True
+        if self.auto_feed is not None:
+            self.feed(*self.auto_feed)
 
     def close(self):
         self.closed = True

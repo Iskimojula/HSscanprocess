@@ -12,6 +12,8 @@ import time
 import tkinter as tk
 from tkinter import ttk
 
+from services.gyro_service import BAUD_CANDIDATES
+
 FONT_VALUE = ("Consolas", 9)
 FONT_THETA = ("Arial", 12, "bold")
 FONT_SMALL = ("Arial", 8)
@@ -23,6 +25,10 @@ COLOR_ERROR = "#B3261E"
 COLOR_HINT = "#1A4B8C"
 
 PLACEHOLDER_TRIPLE = "-- / -- / --"
+BAUD_AUTO = "自动"
+#每个角度按 {:8.2f} 排（-179.99 这类 7 字符也放得下），三数合计 30 字符
+VALUE_WIDTH = 30
+AXIS_WIDTH = 25
 
 
 class GyroPanel(tk.LabelFrame):
@@ -46,77 +52,87 @@ class GyroPanel(tk.LabelFrame):
 
     def _build(self):
         self.var_port = tk.StringVar(value="COM3")
+        self.var_baud = tk.StringVar(value=BAUD_AUTO)
         self.var_status = tk.StringVar(value="● 未连接")
-        self.var_rate = tk.StringVar(value="")
         self.var_reference = tk.StringVar(value=PLACEHOLDER_TRIPLE)
         self.var_current = tk.StringVar(value=PLACEHOLDER_TRIPLE)
         self.var_theta = tk.StringVar(value="--")
         self.var_axis = tk.StringVar(value="(--, --, --)")
         self.var_message = tk.StringVar(value="")
 
-        # 第 0 行：端口选择 + 连接按钮 + 状态
-        tk.Label(self, text="端口").grid(row=0, column=0, sticky="w", padx=(4, 2))
-        self.cmb_port = ttk.Combobox(
-            self, textvariable=self.var_port, width=7, values=[], state="normal"
-        )
+        #连接区/角度区/theta 区各用独立子网格，避免行与行之间互相挤占列宽
+        conn = tk.Frame(self)
+        conn.grid(row=0, column=0, sticky="we")
+        angles = tk.Frame(self)
+        angles.grid(row=1, column=0, sticky="we")
+        theta_row = tk.Frame(self)
+        theta_row.grid(row=2, column=0, sticky="we")
+        msg_row = tk.Frame(self)
+        msg_row.grid(row=3, column=0, sticky="we")
+
+        # 连接区：端口 / 波特率 / 连接按钮 / 状态
+        tk.Label(conn, text="端口").grid(row=0, column=0, sticky="w", padx=(4, 2))
+        self.cmb_port = ttk.Combobox(conn, textvariable=self.var_port, width=7, values=[])
         self.cmb_port.grid(row=0, column=1, sticky="w")
-        self.btn_connect = tk.Button(
-            self, text="连接", width=7, command=self.on_connect_toggle
+        tk.Label(conn, text="波特率").grid(row=0, column=2, sticky="w", padx=(8, 2))
+        self.cmb_baud = ttk.Combobox(
+            conn,
+            textvariable=self.var_baud,
+            width=8,
+            values=[BAUD_AUTO] + [str(b) for b in BAUD_CANDIDATES],
         )
-        self.btn_connect.grid(row=0, column=2, sticky="w", padx=4)
-        #固定宽度：状态/速率/数值长度变化时不改变面板宽度（避免窗口抖动或被裁切）
-        self.lbl_status = tk.Label(self, textvariable=self.var_status, anchor="w", width=24)
-        self.lbl_status.grid(row=0, column=3, columnspan=2, sticky="w")
-        tk.Label(self, textvariable=self.var_rate, anchor="e", fg=COLOR_OFF, width=8).grid(
-            row=0, column=5, sticky="e"
+        self.cmb_baud.grid(row=0, column=3, sticky="w")
+        self.btn_connect = tk.Button(conn, text="连接", width=7, command=self.on_connect_toggle)
+        self.btn_connect.grid(row=0, column=4, sticky="w", padx=4)
+        #固定宽度：状态文字长度变化时不改变面板宽度（避免窗口抖动或被裁切）
+        self.lbl_status = tk.Label(conn, textvariable=self.var_status, anchor="w", width=26)
+        self.lbl_status.grid(row=0, column=5, sticky="w")
+
+        # 角度区第 1 行：初始角度（按下"记录"时锁定）
+        tk.Label(angles, text="初始 Yaw1/Pitch1/Roll1").grid(
+            row=0, column=0, sticky="w", padx=(4, 2)
+        )
+        tk.Label(angles, textvariable=self.var_reference, font=FONT_VALUE, anchor="w",
+                 width=VALUE_WIDTH).grid(
+            row=0, column=1, sticky="w"
+        )
+        self.btn_record = tk.Button(angles, text="记录", width=7, command=self.on_record)
+        self.btn_record.grid(row=0, column=2, sticky="w", padx=(10, 4))
+
+        # 角度区第 2 行：当前角度
+        tk.Label(angles, text="当前 Yaw2/Pitch2/Roll2").grid(
+            row=1, column=0, sticky="w", padx=(4, 2)
+        )
+        tk.Label(angles, textvariable=self.var_current, font=FONT_VALUE, anchor="w",
+                 width=VALUE_WIDTH).grid(
+            row=1, column=1, sticky="w"
+        )
+        self.btn_clear = tk.Button(angles, text="清零", width=7, command=self.on_clear)
+        self.btn_clear.grid(row=1, column=2, sticky="w", padx=(10, 4))
+
+        # theta 区：转动角 theta 与转轴 L
+        tk.Label(theta_row, text="转动角 theta =").grid(row=0, column=0, sticky="w", padx=(4, 2))
+        tk.Label(theta_row, textvariable=self.var_theta, font=FONT_THETA, anchor="w").grid(
+            row=0, column=1, sticky="w"
+        )
+        tk.Label(theta_row, text="°", anchor="w").grid(row=0, column=2, sticky="w", padx=(1, 12))
+        tk.Label(theta_row, text="转轴 L =", anchor="w").grid(row=0, column=3, sticky="w")
+        tk.Label(theta_row, textvariable=self.var_axis, font=FONT_VALUE, anchor="w",
+                 width=AXIS_WIDTH).grid(
+            row=0, column=4, sticky="w"
         )
 
-        # 第 1 行：初始角度（按下"记录"时锁定）
-        tk.Label(self, text="初始 Yaw1/Pitch1/Roll1").grid(
-            row=1, column=0, columnspan=2, sticky="w", padx=(4, 2)
-        )
+        # 提示/错误信息（就近显示，不只靠颜色）
         tk.Label(
-            self, textvariable=self.var_reference, font=FONT_VALUE, anchor="w", width=24
-        ).grid(
-            row=1, column=2, columnspan=2, sticky="w"
-        )
-        self.btn_record = tk.Button(self, text="记录", width=7, command=self.on_record)
-        self.btn_record.grid(row=1, column=4, sticky="e", padx=4)
-
-        # 第 2 行：当前角度
-        tk.Label(self, text="当前 Yaw2/Pitch2/Roll2").grid(
-            row=2, column=0, columnspan=2, sticky="w", padx=(4, 2)
-        )
-        tk.Label(
-            self, textvariable=self.var_current, font=FONT_VALUE, anchor="w", width=24
-        ).grid(
-            row=2, column=2, columnspan=2, sticky="w"
-        )
-        self.btn_clear = tk.Button(self, text="清零", width=7, command=self.on_clear)
-        self.btn_clear.grid(row=2, column=4, sticky="e", padx=4)
-
-        # 第 3 行：转动角 theta 与转轴 L
-        tk.Label(self, text="转动角 theta =").grid(row=3, column=0, sticky="w", padx=(4, 2))
-        tk.Label(self, textvariable=self.var_theta, font=FONT_THETA, anchor="w").grid(
-            row=3, column=1, sticky="w"
-        )
-        tk.Label(self, text="°", anchor="w").grid(row=3, column=2, sticky="w")
-        tk.Label(self, text="转轴 L =", anchor="w").grid(row=3, column=3, sticky="w")
-        tk.Label(self, textvariable=self.var_axis, font=FONT_VALUE, anchor="w", width=25).grid(
-            row=3, column=4, columnspan=2, sticky="w"
-        )
-
-        # 第 4 行：错误/提示信息（就近显示，不只靠颜色）
-        tk.Label(
-            self,
+            msg_row,
             textvariable=self.var_message,
             font=FONT_SMALL,
             fg=COLOR_ERROR,
             anchor="w",
             justify="left",
             width=58,
-            wraplength=430,
-        ).grid(row=4, column=0, columnspan=6, sticky="w", padx=4)
+            wraplength=560,
+        ).grid(row=0, column=0, sticky="w", padx=4)
 
     # ── 刷新 ───────────────────────────────────────────────────────
 
@@ -125,7 +141,7 @@ class GyroPanel(tk.LabelFrame):
         """定长格式化三方向角度，避免刷新时文字宽度抖动。"""
         if yaw is None or pitch is None or roll is None:
             return PLACEHOLDER_TRIPLE
-        return "{:6.2f} / {:6.2f} / {:6.2f}".format(yaw, pitch, roll)
+        return "{:8.2f} / {:8.2f} / {:8.2f}".format(yaw, pitch, roll)
 
     def refresh(self):
         """从服务端拉取快照并刷新界面（不阻塞）。"""
@@ -149,7 +165,7 @@ class GyroPanel(tk.LabelFrame):
         if snap.theta_deg is None:
             self.var_theta.set("--")
         else:
-            self.var_theta.set("{:6.2f}".format(snap.theta_deg))
+            self.var_theta.set("{:7.2f}".format(snap.theta_deg))
 
         if snap.axis is None:
             self.var_axis.set("(--, --, --)")
@@ -159,9 +175,6 @@ class GyroPanel(tk.LabelFrame):
             )
 
         self._set_status(snap)
-        self.var_rate.set(
-            "{:.1f} Hz".format(snap.rate_hz) if snap.connected and snap.rate_hz else ""
-        )
         self.var_message.set(snap.error or "")
         self._set_connect_button(snap)
 
@@ -179,9 +192,12 @@ class GyroPanel(tk.LabelFrame):
         elif not snap.fresh:
             text, color = "● 数据超时", COLOR_WARN
         else:
-            text, color = "● 已连接", COLOR_OK
-        if snap.temperature is not None and snap.connected:
-            text += "  {:.1f}℃".format(snap.temperature)
+            text, color = "● 已连接 {}".format(snap.baud or ""), COLOR_OK
+        if snap.connected:
+            if snap.rate_hz:
+                text += "  {:.0f}Hz".format(snap.rate_hz)
+            if snap.temperature:
+                text += "  {:.1f}℃".format(snap.temperature)
         self.var_status.set(text)
         self.lbl_status.config(fg=color)
 
@@ -241,7 +257,17 @@ class GyroPanel(tk.LabelFrame):
             return
         self.var_message.set("")
         self.btn_connect.config(text="连接中…", state="disabled")
-        self.service.start(port)
+        self.service.start(port, self._selected_baud())
+
+    def _selected_baud(self):
+        """返回面板上选择的波特率；"自动"返回 None 交给服务层识别。"""
+        value = self.var_baud.get().strip()
+        if value in ("", BAUD_AUTO, "自动识别"):
+            return None
+        try:
+            return int(value)
+        except ValueError:
+            return None
 
     # ── 端口枚举（子线程 + after 回主线程） ────────────────────────
 
