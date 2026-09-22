@@ -6,9 +6,9 @@ def setdirectionfromtheta(theta):
     if theta == 90:
         direction = 'chuizhi'
     if theta == 45:
-            direction == 'degree45'
+        direction = 'degree45'
     if theta == 130:
-            direction == 'degree135'
+        direction = 'degree135'
     return direction
 
 transdirstr = {
