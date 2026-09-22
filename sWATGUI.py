@@ -10,6 +10,11 @@ import capprocess
 from collections import deque
 import os
 import optotunecontrol as mirctl
+from services.gyro_service import GyroService
+from views.gyro_panel import GyroPanel
+from utils.resources import resource_path
+
+
 class App:
     def __init__(self,window,window_title,video_source = 0):
         #信号灯
@@ -18,8 +23,11 @@ class App:
         #新建Frame
         self.root = window
         self.root.title(window_title)
-        self.root.geometry("500x800")
+        #新增陀螺仪面板后窗口高度上调，保证"测试结果"面板完整可见
+        self.root.geometry("520x920")
         self.root.resizable(False,False)
+        #关闭窗口时释放陀螺仪串口（关闭动作在子线程执行，主线程不卡顿）
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
         self.fr_configpara = tk.LabelFrame(self.root,text="实验数据",relief="solid",bd = 2)
         self.fr_configpara.pack(anchor="w",padx=20)
@@ -68,6 +76,11 @@ class App:
 
         #振镜控制显示
         self.mirrorGUI()
+
+        #陀螺仪角度与转动角 theta 面板（设备访问/计算都在 services/ 里，按钮回调不阻塞）
+        self.gyro_service = GyroService()
+        self.gyro_panel = GyroPanel(self.fr_configpara, self.gyro_service)
+        self.gyro_panel.grid(row=6,column=0,columnspan=9,sticky="we",padx=6,pady=(6,8))
 
         #实验图像显示
         self.update_frame()
@@ -280,7 +293,8 @@ class App:
         except queue.Empty:
             pass
         if not self.openflag:
-            img = Image.open("no frame.png").convert("L")  # 关键：convert("L")
+            #用动态资源路径，兼容 PyInstaller 打包（sys._MEIPASS）
+            img = Image.open(resource_path("no frame.png")).convert("L")  # 关键：convert("L")
             img = img.resize((450, 337), Image.Resampling.LANCZOS)
             imgtk = ImageTk.PhotoImage(image=img)
 
@@ -338,4 +352,12 @@ class App:
             self.indicator.config(fg = "red")
 
         self.root.after(50, self.update_flag)
+
+    def on_close(self):
+        """关闭窗口：先让服务在子线程释放串口，再销毁窗口，避免卡顿与句柄残留。"""
+        try:
+            self.gyro_service.stop()
+        except Exception:
+            pass
+        self.root.destroy()
     
