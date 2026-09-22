@@ -58,8 +58,12 @@ class App:
         target_height = 1200  # 目标图像高度
         self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, target_width)
         self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, target_height)
-        if not self.capture.isOpened():
-            raise ValueError("无法打开摄像头")
+        #相机打不开不再让程序直接崩掉：界面照常起来（参数、陀螺仪面板可用），
+        #图像与测试结果区保持"no frame!"，方便在没有相机的机器上调试界面。
+        self.camera_available = bool(self.capture.isOpened())
+        if not self.camera_available:
+            print("[相机] 未检测到可用相机（索引 %s）：图像采集与测试结果不会更新，其余功能正常。"
+                  % video_source)
 
         #启动数据处理线程
         
