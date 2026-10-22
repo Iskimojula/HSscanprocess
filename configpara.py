@@ -22,9 +22,9 @@ class configparameters():
     def __init__(self):
         self._lock = threading.Lock()
         #入瞳半径mm
-        self.ri = 1.6
+        self.ri = 2
         #出瞳半径mm
-        self.ro = 2
+        self.ro = 1.64
         #视场角theta和direction相对应
         self.theta = 0
         #视场角angle,phy
