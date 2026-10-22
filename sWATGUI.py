@@ -108,7 +108,10 @@ class App:
         ro = float(self.__ent_ro.get())
         theta = float(self.__ent_theta.get())
         angle = float(self.__ent_angle.get())
-        lens = float(self.__ent_inputD.get())
+        sph = float(self.__ent_inputsph.get())
+        cyl = float(self.__ent_inputcyl.get())
+        axis = float(self.__ent_inputaxis.get())
+        lens = [sph,cyl,axis]
         self.para.setconfigparameters(ri,ro,theta,angle,lens)
         self.para.printpara()
         self.openflag = True
@@ -244,13 +247,25 @@ class App:
         self.__ent_angle.grid(row=3,column=1)
         lab_ent_angle2 = tk.Label(self.fr_configpara,text="deg").grid(row=3,column=2)
 
-        lab_ent_inputD1 = tk.Label(self.fr_configpara,text="试镜片：").grid(row=4,column=0)
+        tk.Label(self.fr_configpara,text="试镜片_sph：").grid(row=4,column=0)
         inputD_default = tk.DoubleVar(value=self.para.inputD)
-        self.__ent_inputD = tk.Entry(self.fr_configpara,textvariable=inputD_default,width=5)
-        self.__ent_inputD.grid(row=4,column=1)
-        lab_ent_inputD2 = tk.Label(self.fr_configpara,text="D").grid(row=4,column=2)
+        self.__ent_inputsph = tk.Entry(self.fr_configpara,textvariable=inputD_default,width=5)
+        self.__ent_inputsph.grid(row=4,column=1)
+        tk.Label(self.fr_configpara,text="D").grid(row=4,column=2)
+
+        tk.Label(self.fr_configpara,text="试镜片_cyl：").grid(row=5,column=0)
+        inputD_default = tk.DoubleVar(value=self.para.inputD)
+        self.__ent_inputcyl = tk.Entry(self.fr_configpara,textvariable=inputD_default,width=5)
+        self.__ent_inputcyl.grid(row=5,column=1)
+        tk.Label(self.fr_configpara,text="D").grid(row=5,column=2)
+
+        tk.Label(self.fr_configpara,text="试镜片_axis：").grid(row=6,column=0)
+        inputD_default = tk.DoubleVar(value=self.para.inputD)
+        self.__ent_inputaxis = tk.Entry(self.fr_configpara,textvariable=inputD_default,width=5)
+        self.__ent_inputaxis.grid(row=6,column=1)
+        tk.Label(self.fr_configpara,text="°").grid(row=6,column=2)
         
-        Bt = tk.Button(self.fr_configpara,text="确定",command=self.getinputparameters,width=10).grid(row=5,column=1,columnspan=2)
+        Bt = tk.Button(self.fr_configpara,text="确定",command=self.getinputparameters,width=10).grid(row=7,column=1,columnspan=2)
 
     def stateGUI(self):
         self.mode = tk.IntVar()

@@ -7,7 +7,7 @@ def setdirectionfromtheta(theta):
         direction = 'chuizhi'
     if theta == 45:
             direction = 'degree45'
-    if theta == 130:
+    if theta == 135:
             direction = 'degree135'
     return direction
 
@@ -30,7 +30,9 @@ class configparameters():
         #视场角angle,phy
         self.angle = 0
         #视镜片的度数
-        self.inputD = 0
+        self.inputsph = 0
+        self.inputcyl = 0
+        self.inputaxis = 0
         #视场角direction
         self.direction = setdirectionfromtheta(self.theta)
         
@@ -44,14 +46,16 @@ class configparameters():
             print(f"视场角方向direction:{self.direction}")
     
     def makestrforsave(self):
-         return f"入瞳半径：{self.ri:.2f}，出瞳半径：{self.ro:.2f}，视场角：{transdirstr[self.direction]}，偏转X：{self.angle:.1f}，偏转Y：{self.angle:.1f}，试镜片：{self.inputD:.2f}"
+         return f"入瞳半径：{self.ri:.2f}，出瞳半径：{self.ro:.2f}，视场角：{transdirstr[self.direction]}，偏转X：{self.angle:.1f}，偏转Y：{self.angle:.1f}，sph：{self.inputsph:.2f}, cyl{self.inputcyl:.2f}, axis{self.inputaxis:.2f}"
     def setconfigparameters(self,ri,ro,theta,angle,lens):
         with self._lock:
             self.ri = ri
             self.ro = ro
             self.theta = theta
             self.angle = angle
-            self.inputD = lens
+            self.inputsph = lens[0]
+            self.inputcyl = lens[1]
+            self.inputaxis = lens[2]
             self.direction = setdirectionfromtheta(self.theta)
 
     def checkvaild(self):
