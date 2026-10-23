@@ -204,7 +204,7 @@ class App:
         if not os.path.exists(savefolder):
             os.makedirs(savefolder)
 
-        name = str(self.para.direction)+"_angle"+str(self.para.angle)+"_"+str(self.para.inputD)+"D.jpg"
+        name = str(self.para.direction)+"_angle"+str(self.para.angle)+"_input "+str(self.para.inputsph)+" "+str(self.para.inputcyl)+" "+str(self.para.inputaxis)+".jpg"
         savepath = os.path.join(savefolder,name)
         cv2.imwrite(savepath,self.currentframe)
     def cleardataqueue(self):
@@ -247,25 +247,25 @@ class App:
         self.__ent_angle.grid(row=3,column=1)
         lab_ent_angle2 = tk.Label(self.fr_configpara,text="deg").grid(row=3,column=2)
 
-        tk.Label(self.fr_configpara,text="试镜片_sph：").grid(row=4,column=0)
-        inputD_default = tk.DoubleVar(value=self.para.inputD)
-        self.__ent_inputsph = tk.Entry(self.fr_configpara,textvariable=inputD_default,width=5)
+        tk.Label(self.fr_configpara,text="sph(D)：").grid(row=4,column=0)
+        inputsph_default = tk.DoubleVar(value=self.para.inputsph)
+        self.__ent_inputsph = tk.Entry(self.fr_configpara,textvariable=inputsph_default,width=5)
         self.__ent_inputsph.grid(row=4,column=1)
-        tk.Label(self.fr_configpara,text="D").grid(row=4,column=2)
+        #tk.Label(self.fr_configpara,text="D").grid(row=4,column=2)
 
-        tk.Label(self.fr_configpara,text="试镜片_cyl：").grid(row=5,column=0)
-        inputD_default = tk.DoubleVar(value=self.para.inputD)
-        self.__ent_inputcyl = tk.Entry(self.fr_configpara,textvariable=inputD_default,width=5)
+        tk.Label(self.fr_configpara,text="cyl(D),axis(°)：").grid(row=5,column=0)
+        inputcyl_default = tk.DoubleVar(value=self.para.inputcyl)
+        self.__ent_inputcyl = tk.Entry(self.fr_configpara,textvariable=inputcyl_default,width=5)
         self.__ent_inputcyl.grid(row=5,column=1)
-        tk.Label(self.fr_configpara,text="D").grid(row=5,column=2)
+        #tk.Label(self.fr_configpara,text="D").grid(row=5,column=2)
 
-        tk.Label(self.fr_configpara,text="试镜片_axis：").grid(row=6,column=0)
-        inputD_default = tk.DoubleVar(value=self.para.inputD)
-        self.__ent_inputaxis = tk.Entry(self.fr_configpara,textvariable=inputD_default,width=5)
-        self.__ent_inputaxis.grid(row=6,column=1)
-        tk.Label(self.fr_configpara,text="°").grid(row=6,column=2)
-        
-        Bt = tk.Button(self.fr_configpara,text="确定",command=self.getinputparameters,width=10).grid(row=7,column=1,columnspan=2)
+        #tk.Label(self.fr_configpara,text="axis：").grid(row=6,column=0)
+        inputaxis_default = tk.DoubleVar(value=self.para.inputaxis)
+        self.__ent_inputaxis = tk.Entry(self.fr_configpara,textvariable=inputaxis_default,width=5)
+        self.__ent_inputaxis.grid(row=5,column=2)
+        #tk.Label(self.fr_configpara,text="D,°").grid(row=5,column=3)
+      
+        Bt = tk.Button(self.fr_configpara,text="写入参数",command=self.getinputparameters,width=10).grid(row=2,column=3)
 
     def stateGUI(self):
         self.mode = tk.IntVar()
@@ -274,9 +274,9 @@ class App:
         mode2 = tk.Radiobutton(self.fr_configpara,text = "测试模式",variable=self.mode,value=2)
         mode2.grid(row=1,column=3)
         
-        tk.Button(self.fr_configpara,text="保存数据",command=self.saveresults,width=10).grid(row=2,column=3)
-        tk.Button(self.fr_configpara,text="保存图像",command=self.saveframe,width=10).grid(row=3,column=3)
-        tk.Button(self.fr_configpara,text="清空数据",command=self.cleardataqueue,width=10).grid(row = 4, column=3)
+        tk.Button(self.fr_configpara,text="保存数据",command=self.saveresults,width=10).grid(row=3,column=3)
+        tk.Button(self.fr_configpara,text="保存图像",command=self.saveframe,width=10).grid(row=4,column=3)
+        tk.Button(self.fr_configpara,text="清空数据",command=self.cleardataqueue,width=10).grid(row = 5, column=3)
 
     def mirrorGUI(self):
         #振镜输入
@@ -297,9 +297,9 @@ class App:
         #读振镜
         self.update_mirror()
     def flagGUI(self):
-        tk.Label(self.fr_configpara,text="SaveFlag:").grid(row=5,column=3)
+        tk.Label(self.fr_configpara,text="SaveFlag:").grid(row=4,column=5)
         self.indicator = tk.Label(self.fr_configpara,text="●",font=("Arial",16),fg="red")
-        self.indicator.grid(row= 5,column = 4)
+        self.indicator.grid(row= 4,column = 6)
 
         self.update_flag()
     def update_frame(self):
