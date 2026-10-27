@@ -127,13 +127,13 @@ class App:
         ri = float(self.__ent_ri.get())
         ro = float(self.__ent_ro.get())
         #界面上的“坐标x/坐标y”对应内部配置里的 angle/theta（theta 决定 direction）
-        angle = float(self.__ent_x.get())
-        theta = float(self.__ent_y.get())
+        viewx = float(self.__ent_x.get()) #angle ->x
+        viewy = float(self.__ent_y.get()) #theta ->y
         sph = float(self.__ent_inputsph.get())
         cyl = float(self.__ent_inputcyl.get())
         axis = float(self.__ent_inputaxis.get())
         lens = [sph,cyl,axis]
-        self.para.setconfigparameters(ri,ro,theta,angle,lens)
+        self.para.setconfigparameters(ri,ro,viewy,viewx,lens)
         self.para.printpara()
         self.openflag = True
         try:
@@ -178,8 +178,8 @@ class App:
 
         #文件名与界面一致：坐标x（内部 angle）、坐标y（内部 theta）
         #例：shuiping_x3.0_y90.0_input 1.00 0.50 10.00.jpg
-        name = "{}_x{}_y{}_input {} {} {}.jpg".format(
-            self.para.direction,self.para.angle,self.para.theta,
+        name = "image_x{}_y{}_input {} {} {}.jpg".format(
+            self.para.viewx,self.para.viewy,
             self.para.inputsph,self.para.inputcyl,self.para.inputaxis)
         savepath = os.path.join(savefolder,name)
         cv2.imwrite(savepath,self.currentframe)
@@ -217,10 +217,10 @@ class App:
         self.__ent_ro = add_row(1,"出瞳半径：",self.__var_ro,"mm")
 
         #视场角angle -> 坐标x，视场角theta -> 坐标y
-        self.__var_x = tk.DoubleVar(value=self.para.angle)
+        self.__var_x = tk.DoubleVar(value=self.para.viewx)
         self.__ent_x = add_row(2,"坐标x：",self.__var_x,"deg")
 
-        self.__var_y = tk.DoubleVar(value=self.para.theta)
+        self.__var_y = tk.DoubleVar(value=self.para.viewy)
         self.__ent_y = add_row(3,"坐标y：",self.__var_y,"deg")
 
         self.__var_inputsph = tk.DoubleVar(value=self.para.inputsph)

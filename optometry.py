@@ -346,8 +346,11 @@ def initaberration_correction(z_ist_with_initaber,dir = 0, angle = 0):
 
 def demodulation(ori_z_list,para):
     
-    z = initaberration_correction(ori_z_list,para.direction,para.angle)
-    Mx,My = readMagnificationRatio(para.direction,para.angle)
+    z = ori_z_list
+    #initaberration_correction(ori_z_list,para.direction,para.angle)
+    Mx = 1
+    My = 1
+    #readMagnificationRatio(para.direction,para.angle)
     b3,b4,b5 = algo_elli_correction(z[3],z[4],z[5],Mx,My,para.ri,para.ro,para.theta)
 
     M,J45,J180 = calc_M_J45_J180(b3,b4,b5,radius=para.ri)
@@ -359,7 +362,7 @@ def demodulation(ori_z_list,para):
                             round(Mx,2),round(My,2),
                             round(sph,2),round(cyl,2),round(axis,2))
     
-    print(f"坐标x: {para.angle}, 坐标y: {para.theta}, direction: {para.direction}")
+    print(f"坐标x: {para.viewx}, 坐标y: {para.viewy}")
     print(f"修正前：z(2,-2): {z[3]:.3f},z(2,0): {z[4]:.3f},z(2,2): {z[5]:.3f},Mx: {Mx:.3f},My: {My:.3f}")
     print(f"修正后：b(2,-2): {b3:.3f},b(2,0): {b4:.3f},b(2,2): {b5:.3f},cyl: {cyl:.3f},sph: {sph:.3f},axis: {axis:.3f}")
     return results

@@ -34,7 +34,9 @@ class configparameters():
         self.inputcyl = 0
         self.inputaxis = 0
         #视场角direction
-        self.direction = setdirectionfromtheta(self.theta)
+        self.viewx = 0
+        self.viewy = 0
+        #self.direction = setdirectionfromtheta(self.theta)
         
 
     def printpara(self):
@@ -42,21 +44,21 @@ class configparameters():
             print("config parameters:")
             print(f"入瞳半径：{self.ri:.2f}")
             print(f"出瞳半径：{self.ro:.2f}")
-            print(f"坐标x,坐标y: {self.angle:.2f},{self.theta:.2f}")
-            print(f"视场角方向direction:{self.direction}")
+            print(f"坐标x,坐标y: {self.viewx:.2f},{self.viewy:.2f}")
+           # print(f"视场角方向direction:{self.direction}")
     
     def makestrforsave(self):
-         return f"入瞳半径：{self.ri:.2f}，出瞳半径：{self.ro:.2f}，视场角方向：{transdirstr[self.direction]}，坐标X：{self.angle:.1f}，坐标Y：{self.theta:.1f}，sph：{self.inputsph:.2f}, cyl:{self.inputcyl:.2f}, axis:{self.inputaxis:.2f}"
-    def setconfigparameters(self,ri,ro,theta,angle,lens):
+         return f"入瞳半径：{self.ri:.2f}，出瞳半径：{self.ro:.2f}，坐标X：{self.viewx:.1f}，坐标Y：{self.viewy:.1f}，sph：{self.inputsph:.2f}, cyl:{self.inputcyl:.2f}, axis:{self.inputaxis:.2f}"
+    def setconfigparameters(self,ri,ro,viewy,viewx,lens):
         with self._lock:
             self.ri = ri
             self.ro = ro
-            self.theta = theta
-            self.angle = angle
+            self.viewy = viewy
+            self.viewx = viewx
             self.inputsph = lens[0]
             self.inputcyl = lens[1]
             self.inputaxis = lens[2]
-            self.direction = setdirectionfromtheta(self.theta)
+            #self.direction = setdirectionfromtheta(self.theta)
 
     def checkvaild(self):
         if self.ri==0 or self.ro==0:
