@@ -8,7 +8,7 @@ from math import sqrt
 from scipy.spatial import cKDTree
 import math
 import os
-import HSscan.optometry as opo
+import optometry as opo
 
 #外推法代码定义
 def find_adjacent_points(point, distance=87):   #给入一个标定的点  distance为标定点间距
@@ -635,7 +635,7 @@ def draw_lines(canvas, list_standard, list_nostandard):
         x_std, y_std = round(point_std[0]), round(point_std[1])
         x_nstd, y_nstd = round(point_nstd[0]), round(point_nstd[1])
         cv2.line(canvas, (x_std, y_std), (x_nstd, y_nstd), (0, 0, 0), 1)  # 绘制连线
-    cv2.imshow("Canvas_line", canvas)
+    #cv2.imshow("Canvas_line", canvas)
 
 
 def rotate_point(point, angle_rad):
@@ -833,10 +833,10 @@ def lvpyfun(image1_filepath,image2_filepath,radius,F,X,standard_spots_filepath,n
 
     if flag:
         #保存框框图片地址
-        cv2.imwrite('C:\\Users\\Administrator\\Desktop\\123\\low.bmp', img11)
+        #cv2.imwrite('C:\\Users\\Administrator\\Desktop\\123\\low.bmp', img11)
         # # 显示框框图
-        cv2.imshow("10",img10)
-        cv2.imshow("img11",img11)
+        #cv2.imshow("10",img10)
+        #cv2.imshow("img11",img11)
         #给入可调区域的偏移坐标central1与完整标准点的central2
         xy_diffs,list_standard_spots=getcentraldiffs(no_standard_points_ratated,standard_points)
         # print(xy_diffs)
@@ -873,26 +873,5 @@ def lvpyfun(image1_filepath,image2_filepath,radius,F,X,standard_spots_filepath,n
 # cv2.destroyAllWindows()
 #
 # #process_images('C:\\Users\\Dell\\Desktop\\optotune230810\\data\\2023_8_13_16_36_54','C:\\Users\\Dell\\Desktop\\optotune230810\\data\\2023_8_13_16_36_54\\sdbk.txt','C:\\Users\\Dell\\Desktop\\optotune230810\\data\\2023_8_13_16_36_54_2')
-capture = cv2.VideoCapture(0, cv2.CAP_ANY)  # 打开内置摄像头
-
-target_width = 1600  # 目标图像宽度
-target_height = 1200  # 目标图像高度
-
-# 设置摄像头的分辨率
-capture.set(cv2.CAP_PROP_FRAME_WIDTH, target_width)
-capture.set(cv2.CAP_PROP_FRAME_HEIGHT, target_height)
 
 
-
-while capture.isOpened():  # 摄像头被打开
-    retval, image = capture.read()
-    if retval == True:
-        cv2.imshow("ori", image)
-        cv2.imwrite('C:\\Users\\Dell\\Desktop\\ori\\ori.bmp', image)
-        r = lvpyfun("back_1600_1200_20240731.bmp", image, 1.637 , 13.11878520128891, 3.45, "DMM1600_1200交大校准完成后的数据.txt", 4)  # 画圆半径单位毫米，透镜阵列焦距单位毫米，一个像素几微米,标准点坐标
-        print(r)
-    key = cv2.waitKey(1000)
-    if key == 32:
-        break
-capture.release()
-cv2.destroyAllWindows()
