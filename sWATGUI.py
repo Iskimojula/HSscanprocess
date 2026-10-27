@@ -49,7 +49,7 @@ class App:
         self.para_queue = queue.Queue(maxsize=1)
 
         #存储管理
-        self.resfifo = deque(maxlen = 20)
+        self.resfifo = deque(maxlen = 10)
         #振镜初始化
         self.mir = mirctl.optotune()
         #打开摄像头
