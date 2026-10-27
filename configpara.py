@@ -42,11 +42,11 @@ class configparameters():
             print("config parameters:")
             print(f"入瞳半径：{self.ri:.2f}")
             print(f"出瞳半径：{self.ro:.2f}")
-            print(f"视场角theta,angle: {self.theta:.2f},{self.angle:.2f}")
+            print(f"坐标x,坐标y: {self.angle:.2f},{self.theta:.2f}")
             print(f"视场角方向direction:{self.direction}")
     
     def makestrforsave(self):
-         return f"入瞳半径：{self.ri:.2f}，出瞳半径：{self.ro:.2f}，视场角：{transdirstr[self.direction]}，偏转X：{self.angle:.1f}，偏转Y：{self.angle:.1f}，sph：{self.inputsph:.2f}, cyl:{self.inputcyl:.2f}, axis:{self.inputaxis:.2f}"
+         return f"入瞳半径：{self.ri:.2f}，出瞳半径：{self.ro:.2f}，视场角方向：{transdirstr[self.direction]}，坐标X：{self.angle:.1f}，坐标Y：{self.theta:.1f}，sph：{self.inputsph:.2f}, cyl:{self.inputcyl:.2f}, axis:{self.inputaxis:.2f}"
     def setconfigparameters(self,ri,ro,theta,angle,lens):
         with self._lock:
             self.ri = ri

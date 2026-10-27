@@ -68,6 +68,8 @@ class App:
 
         #存储管理
         self.resfifo = deque(maxlen = 10)
+        #最近一帧画面：没有相机时保持 None，“保存图像”会据此提示而不是抛异常
+        self.currentframe = None
         #振镜初始化
         self.mir = mirctl.optotune()
         #打开摄像头
@@ -166,11 +168,19 @@ class App:
 
 
     def saveframe(self):
+        if self.currentframe is None:
+            print("没有可用画面，不能保存图像！")
+            return
+
         savefolder = "res"
         if not os.path.exists(savefolder):
             os.makedirs(savefolder)
 
-        name = str(self.para.direction)+"_angle"+str(self.para.angle)+"_input "+str(self.para.inputsph)+" "+str(self.para.inputcyl)+" "+str(self.para.inputaxis)+".jpg"
+        #文件名与界面一致：坐标x（内部 angle）、坐标y（内部 theta）
+        #例：shuiping_x3.0_y90.0_input 1.00 0.50 10.00.jpg
+        name = "{}_x{}_y{}_input {} {} {}.jpg".format(
+            self.para.direction,self.para.angle,self.para.theta,
+            self.para.inputsph,self.para.inputcyl,self.para.inputaxis)
         savepath = os.path.join(savefolder,name)
         cv2.imwrite(savepath,self.currentframe)
     def cleardataqueue(self):
