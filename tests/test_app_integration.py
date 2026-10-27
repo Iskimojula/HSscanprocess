@@ -78,7 +78,8 @@ def test_app_builds_gyro_panel(root, monkeypatch):
         assert app.gyro_panel is not None
         assert app.gyro_panel.winfo_exists()
         assert app.gyro_panel.winfo_manager() == "grid"
-        assert app.gyro_panel.grid_info()["row"] == 6
+        # 陀螺仪面板横跨“光学参数/模式操作/振镜”三列，位于它们下方（第 1 行）
+        assert app.gyro_panel.grid_info()["row"] == 1
         # 面板初始状态：未连接 + 占位符
         app.gyro_panel.refresh()
         assert app.gyro_panel.var_theta.get() == "--"
