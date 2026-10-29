@@ -58,9 +58,15 @@ class _FakeMirror:
 
 @pytest.fixture
 def root():
-    try:
-        r = tk.Tk()
-    except tk.TclError:
+    """Tk 根窗口：同一进程里反复创建/销毁偶尔会失败，重试几次再跳过。"""
+    r = None
+    for _ in range(3):
+        try:
+            r = tk.Tk()
+            break
+        except tk.TclError:
+            time.sleep(0.2)
+    if r is None:
         pytest.skip("无图形环境")
     r.withdraw()
     yield r
@@ -89,6 +95,35 @@ def test_app_builds_gyro_panel(root, monkeypatch):
         app.gyro_panel.refresh()
         assert app.gyro_panel.var_theta.get() == "--"
         assert app.gyro_panel.var_status.get().endswith("未连接")
+    finally:
+        app.gyro_service.stop()
+
+
+class _RampMirror(_FakeMirror):
+    """getxy() 固定返回两路不同读数，便于验证界面的取值映射。"""
+
+    def getxy(self):
+        return 1.0, 2.0
+
+
+def test_getx_gety_mapping(root, monkeypatch):
+    """GETX 显示 getxy() 的第二路读数，GETY 显示第一路读数取反。
+
+    振镜读数和界面上的“坐标x/坐标y”不是同一套量，这个映射是仪器约定，
+    曾被误当成 bug“修正”成 x↔x / y↔y，这里用用例锁住。
+    """
+    _install_stubs(monkeypatch)
+    import optotunecontrol
+
+    monkeypatch.setattr(optotunecontrol, "optotune", _RampMirror)
+
+    from sWATGUI import App
+
+    app = App(root, "sWAT system")
+    try:
+        app.update_mirror()
+        assert app.getx_value.get() == "2.0°"
+        assert app.gety_value.get() == "-1.0°"
     finally:
         app.gyro_service.stop()
 

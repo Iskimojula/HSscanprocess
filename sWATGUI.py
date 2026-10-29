@@ -127,13 +127,13 @@ class App:
         ri = float(self.__ent_ri.get())
         ro = float(self.__ent_ro.get())
         #界面上的“坐标x/坐标y”对应内部配置里的 angle/theta（theta 决定 direction）
-        angle = float(self.__ent_x.get())
-        theta = float(self.__ent_y.get())
+        viewx = float(self.__ent_x.get()) #angle ->x
+        viewy = float(self.__ent_y.get()) #theta ->y
         sph = float(self.__ent_inputsph.get())
         cyl = float(self.__ent_inputcyl.get())
         axis = float(self.__ent_inputaxis.get())
         lens = [sph,cyl,axis]
-        self.para.setconfigparameters(ri,ro,theta,angle,lens)
+        self.para.setconfigparameters(ri,ro,viewy,viewx,lens)
         self.para.printpara()
         self.openflag = True
         try:
@@ -178,8 +178,8 @@ class App:
 
         #文件名与界面一致：坐标x（内部 angle）、坐标y（内部 theta）
         #例：shuiping_x3.0_y90.0_input 1.00 0.50 10.00.jpg
-        name = "{}_x{}_y{}_input {} {} {}.jpg".format(
-            self.para.direction,self.para.angle,self.para.theta,
+        name = "image_x{}_y{}_input {} {} {}.jpg".format(
+            self.para.viewx,self.para.viewy,
             self.para.inputsph,self.para.inputcyl,self.para.inputaxis)
         savepath = os.path.join(savefolder,name)
         cv2.imwrite(savepath,self.currentframe)
@@ -217,10 +217,10 @@ class App:
         self.__ent_ro = add_row(1,"出瞳半径：",self.__var_ro,"mm")
 
         #视场角angle -> 坐标x，视场角theta -> 坐标y
-        self.__var_x = tk.DoubleVar(value=self.para.angle)
+        self.__var_x = tk.DoubleVar(value=self.para.viewx)
         self.__ent_x = add_row(2,"坐标x：",self.__var_x,"deg")
 
-        self.__var_y = tk.DoubleVar(value=self.para.theta)
+        self.__var_y = tk.DoubleVar(value=self.para.viewy)
         self.__ent_y = add_row(3,"坐标y：",self.__var_y,"deg")
 
         self.__var_inputsph = tk.DoubleVar(value=self.para.inputsph)
@@ -275,14 +275,14 @@ class App:
         tk.Button(m,text="置零",command=self.setmirrorzero,width=8).grid(
             row=1,column=3,sticky="w",pady=2)
 
-        #读振镜：GETX 显示 x 通道，GETY 显示 y 通道（固定宽度，读数变化不撑宽面板）
-        self.actualdegreex = tk.StringVar(value="--")
-        self.actualdegreey = tk.StringVar(value="--")
+        #读振镜读数：GETX / GETY 的取值见 update_mirror()（与界面上的“坐标x/坐标y”不是同一套量）
+        self.getx_value = tk.StringVar(value="--")
+        self.gety_value = tk.StringVar(value="--")
         tk.Label(m,text="GETX：",anchor="w").grid(row=2,column=0,sticky="w",pady=(6,2))
-        tk.Label(m,textvariable=self.actualdegreex,anchor="w",width=7).grid(
+        tk.Label(m,textvariable=self.getx_value,anchor="w",width=7).grid(
             row=2,column=1,sticky="w",columnspan=2,pady=(6,2))
         tk.Label(m,text="GETY：",anchor="w").grid(row=3,column=0,sticky="w",pady=2)
-        tk.Label(m,textvariable=self.actualdegreey,anchor="w",width=7).grid(
+        tk.Label(m,textvariable=self.gety_value,anchor="w",width=7).grid(
             row=3,column=1,sticky="w",columnspan=2,pady=2)
 
         self.update_mirror()
@@ -335,10 +335,15 @@ class App:
         self.root.after(RESULT_POLL_MS, self._poll_results)
 
     def update_mirror(self):
-        actualdegreex,actualdegreey = self.mir.getxy()
+        #振镜读数与界面上的“坐标x/坐标y”不是同一套量，这里保持仪器原有的对应关系：
+        #GETX 显示 getxy() 的第二路读数，GETY 显示第一路读数并取反。
+        #（这不是笔误，别再按“x 对 x、y 对 y”去“修正”）
+        mirror_ch0,mirror_ch1 = self.mir.getxy()
 
-        self.actualdegreex.set(f"{actualdegreex}°")
-        self.actualdegreey.set(f"{actualdegreey}°")
+        self.getx_value.set(f"{mirror_ch1}°")
+        #取反后 0 会变成 -0.0，显示上归零
+        gety = 0.0 if mirror_ch0 == 0 else -mirror_ch0
+        self.gety_value.set(f"{gety}°")
 
         self.root.after(50,self.update_mirror)
 
