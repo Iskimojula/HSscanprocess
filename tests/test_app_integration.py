@@ -107,9 +107,9 @@ class _RampMirror(_FakeMirror):
 
 
 def test_getx_gety_mapping(root, monkeypatch):
-    """GETX 显示 getxy() 的第二路读数，GETY 显示第一路读数取反。
+    """GETX 显示 getxy() 第一路读数取反，GETY 显示第二路读数。
 
-    振镜读数和界面上的“坐标x/坐标y”不是同一套量，这个映射是仪器约定，
+    振镜读数和界面上的“坐标x/坐标y”不是同一套量，这个映射是按实机标定定的，
     曾被误当成 bug“修正”成 x↔x / y↔y，这里用用例锁住。
     """
     _install_stubs(monkeypatch)
@@ -122,8 +122,8 @@ def test_getx_gety_mapping(root, monkeypatch):
     app = App(root, "sWAT system")
     try:
         app.update_mirror()
-        assert app.getx_value.get() == "2.0°"
-        assert app.gety_value.get() == "-1.0°"
+        assert app.getx_value.get() == "-1.0°"
+        assert app.gety_value.get() == "2.0°"
     finally:
         app.gyro_service.stop()
 
