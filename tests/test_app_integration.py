@@ -106,8 +106,24 @@ class _RampMirror(_FakeMirror):
         return 1.0, 2.0
 
 
+class _EchoMirror(_FakeMirror):
+    """模拟实机：setxy 写进去的两路读数会被 getxy 原样读回。"""
+
+    def __init__(self):
+        self.channels = (0.0, 0.0)
+
+    def setxy(self, x, y):
+        self.channels = (x, y)
+
+    def setzero(self):
+        self.channels = (0.0, 0.0)
+
+    def getxy(self):
+        return self.channels
+
+
 def test_getx_gety_mapping(root, monkeypatch):
-    """GETX 显示 getxy() 第一路读数取反，GETY 显示第二路读数。
+    """GETX 显示 getxy() 第二路读数取反，GETY 显示第一路读数。
 
     振镜读数和界面上的“坐标x/坐标y”不是同一套量，这个映射是按实机标定定的，
     曾被误当成 bug“修正”成 x↔x / y↔y，这里用用例锁住。
@@ -122,8 +138,31 @@ def test_getx_gety_mapping(root, monkeypatch):
     app = App(root, "sWAT system")
     try:
         app.update_mirror()
-        assert app.getx_value.get() == "-1.0°"
-        assert app.gety_value.get() == "2.0°"
+        assert app.getx_value.get() == "-2.0°"
+        assert app.gety_value.get() == "1.0°"
+    finally:
+        app.gyro_service.stop()
+
+
+def test_setx_sety_show_up_on_gety_getx(root, monkeypatch):
+    """实机标定：SETX=2.2、SETY=-0.74 时，GETY 显示 2.2、GETX 显示 0.74。"""
+    _install_stubs(monkeypatch)
+    import optotunecontrol
+
+    monkeypatch.setattr(optotunecontrol, "optotune", _EchoMirror)
+
+    from sWATGUI import App
+
+    app = App(root, "sWAT system")
+    try:
+        # 通过界面上的 SETX / SETY 输入框 + “确定”按钮下发
+        app._App__var_inputx.set(2.2)
+        app._App__var_inputy.set(-0.74)
+        app.setmirrortarget()
+        app.update_mirror()
+
+        assert app.gety_value.get() == "2.2°"
+        assert app.getx_value.get() == "0.74°"
     finally:
         app.gyro_service.stop()
 
