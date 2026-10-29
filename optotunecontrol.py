@@ -38,11 +38,13 @@ class optotune:
         self.mre2.Mirror.Channel_1.StaticInput.SetAsInput()
         self.available = True
     def setdegreeX(self,target_x):
+        """原始通道接口：把角度直接写到 channel_0（不含用户坐标标定，界面请用 setxy）。"""
         if not self.available:
             return
         x = deg_to_xy(target_x)
         self.mre2.Mirror.Channel_0.StaticInput.SetXY(x)
     def setdegreeY(self,target_y):
+        """原始通道接口：把角度直接写到 channel_1（不含用户坐标标定，界面请用 setxy）。"""
         if not self.available:
             return
         y = deg_to_xy(target_y)
@@ -63,13 +65,21 @@ class optotune:
         return xy_to_deg(float(actual_y[0]))
     
     def setxy(self,target_degreex,target_degreey):
-        self.setdegreeX(target_degreex)
-        self.setdegreeY(target_degreey)
+        #用户坐标 (x, y) 与振镜两路通道按实机标定互换并取反（相当于坐标轴旋转 90°）：
+        #   channel_0 = -y，channel_1 = x
+        #这样输入 SETX=2.2 / SETY=-0.7 打出的振镜状态，
+        #与旧版直接输入 SETX=0.7 / SETY=2.2 完全相同。
+        self.setdegreeX(-target_degreey)
+        self.setdegreeY(target_degreex)
     def setzero(self):
         self.setdegreeX(0)
         self.setdegreeY(0)
     def getxy(self):
-        return round(self.getdegreex(),1), round(self.getdegreey(),1)
+        #把两路通道读数换算回用户坐标，与 setxy 的输入约定一致：
+        #   x = channel_1，y = -channel_0
+        channel_0 = self.getdegreex()
+        channel_1 = self.getdegreey()
+        return round(channel_1,1), round(-channel_0,1)
     
 
 
