@@ -336,15 +336,16 @@ class App:
 
     def update_mirror(self):
         #实机标定出来的对应关系（与界面上的“坐标x/坐标y”也不是同一套量）：
-        #SETX 的设定值从 GETY 读出来，SETY 的设定值取反后从 GETX 读出来。
-        #例：SETX=2.2、SETY=-0.74 时，GETY 显示 2.2、GETX 显示 0.74。
+        #两路读数都取反后再显示。
+        #例：SETX=2.2、SETY=-0.7 时，GETY 显示 0.7、GETX 显示 -2.2。
         #（这不是笔误，别再按“x 对 x、y 对 y”去“修正”）
         mirror_ch0,mirror_ch1 = self.mir.getxy()
 
-        self.gety_value.set(f"{mirror_ch0}°")
         #取反后 0 会变成 -0.0，显示上归零
-        getx = 0.0 if mirror_ch1 == 0 else -mirror_ch1
+        getx = 0.0 if mirror_ch0 == 0 else -mirror_ch0
+        gety = 0.0 if mirror_ch1 == 0 else -mirror_ch1
         self.getx_value.set(f"{getx}°")
+        self.gety_value.set(f"{gety}°")
 
         self.root.after(50,self.update_mirror)
 
