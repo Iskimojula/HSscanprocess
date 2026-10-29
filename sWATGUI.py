@@ -335,16 +335,14 @@ class App:
         self.root.after(RESULT_POLL_MS, self._poll_results)
 
     def update_mirror(self):
-        #实机标定出来的对应关系（与界面上的“坐标x/坐标y”也不是同一套量）：
-        #两路读数都取反后再显示。
-        #例：SETX=2.2、SETY=-0.7 时，GETY 显示 0.7、GETX 显示 -2.2。
+        #振镜读数与界面上的“坐标x/坐标y”不是同一套量，这里保持仪器原有的对应关系：
+        #GETX 显示 getxy() 的第二路读数，GETY 显示第一路读数并取反。
         #（这不是笔误，别再按“x 对 x、y 对 y”去“修正”）
         mirror_ch0,mirror_ch1 = self.mir.getxy()
 
+        self.getx_value.set(f"{mirror_ch1}°")
         #取反后 0 会变成 -0.0，显示上归零
-        getx = 0.0 if mirror_ch0 == 0 else -mirror_ch0
-        gety = 0.0 if mirror_ch1 == 0 else -mirror_ch1
-        self.getx_value.set(f"{getx}°")
+        gety = 0.0 if mirror_ch0 == 0 else -mirror_ch0
         self.gety_value.set(f"{gety}°")
 
         self.root.after(50,self.update_mirror)
